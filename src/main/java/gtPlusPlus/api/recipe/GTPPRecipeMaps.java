@@ -296,4 +296,10 @@ public class GTPPRecipeMaps {
         .progressBar(GTUITextures.PROGRESSBAR_MACERATE)
         .neiFluidInputsGetter(gtRecipe -> new FluidStack[] { Materials.Water.getFluid(0), Materials.Lava.getFluid(0) })
         .build();
+    public static final RecipeMap<RecipeMapBackend> thaumoArborealConverterFakeRecipes = RecipeMapBuilder
+        .of("gtpp.recipe.thaumoarborealconverter")
+        .maxIO(MTEThaumoArborealConverter.getInputSlots(), MTEThaumoArborealConverter.getOutputSlots(), 0, 0)
+        .progressBar(GTUITextures.PROGRESSBAR_MACERATE)
+        .useSpecialSlot()
+        .build();
 }

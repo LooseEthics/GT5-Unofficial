@@ -225,6 +225,7 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
         @Override
         public ProcessingLogic createProcessingLogic() {
             return new ProcessingLogic() {
+                // TODO peaceful tree consumes plant matter instead of rocks
     
                 @Override
                 @Nonnull
@@ -320,6 +321,10 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
             return null;
         }
         
+        private static string getSaplingName(ItemStack sapling){
+            return Item.itemRegistry.getNameForObject(sapling.getItem()) + ":" + sapling.getItemDamage();
+        }
+        
         /**
          * Check if an ItemStack is a sapling that can be farmed.
          *
@@ -328,8 +333,7 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
          */
         private boolean isValidSapling(ItemStack stack) {
             if (stack == null) return false;
-            String registryName = Item.itemRegistry.getNameForObject(stack.getItem());
-            return treeProductsMap.containsKey(registryName + ":" + stack.getItemDamage());
+            return treeProductsMap.containsKey(getSaplingName(stack));
         }
         
         /**
@@ -340,8 +344,7 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
          * @return A map of outputs for each mode. Outputs for some modes might be null.
          */
         private static EnumMap<Mode, ItemStack> getOutputsForSapling(ItemStack sapling) {
-            String registryName = Item.itemRegistry.getNameForObject(sapling.getItem());
-            return treeProductsMap.get(registryName + ":" + sapling.getItemDamage());
+            return treeProductsMap.get(getSaplingName(sapling));
         }
         
         /**
@@ -361,7 +364,7 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
                 Logger.ERROR("Invalid weight passed for registerTreeProducts()");
                 return;
             }
-            String key = Item.itemRegistry.getNameForObject(saplingIn.getItem()) + ":" + saplingIn.getItemDamage();
+            String key = getSaplingName(saplingIn);
             HashMap<ItemStack, Integer> map = treeProductsMap.get(key);
             if (map == null) {
                 map = new HashMap<>(ItemStack.class);
@@ -370,12 +373,66 @@ public class MTEThaumoArborealConverter extends GTPPMultiBlockBase<MTEThaumoArbo
             map.put(output, weight);
         }
         
+        private static int getSaplingTotalWeight(ItemStack saplingIn){
+            int weight = 0;
+            HashMap<ItemStack, Integer> saplingMap = treeProductsMap.get(getSaplingName(saplingIn));
+            if (saplingMap == null) return 0;
+            for (int w : saplingMap.values()){
+                weight += w;
+            }
+            return weight;
+        }
+        
+        public static int getInputSlots() return 1;
+        public static int getOutputSlots() return 10;
+        
         /**
          * Add a recipe for this tree to NEI. These recipes are only used in NEI, they are never used for processing logic.
          *
          * @return True if the recipe was added successfully.
          */
-        public static boolean addFakeRecipeToNEI(ItemStack saplingIn, ItemStack output, int weight){
-            // TODO
+        public static boolean addFakeRecipeToNEI(ItemStack saplingIn, ItemStack inputStack, HashMap<ItemStack, Integer> outputMap){
+            int recipeCount = GTPPRecipeMaps.thaumoArborealConverterFakeRecipes.getAllRecipes()
+                .size();
+            
+            // Sapling goes into the "special" slot.
+            ItemStack specialStack = saplingIn.copy();
+            specialStack.stackSize = 0;
+            
+            int totalWeight = getSaplingTotalWeight(saplingIn);
+            if (totalWeight <= 0){
+                Logger.INFO("Invalid weight(" + totalWeight + ") for sapling: " + sapling.getDisplayName());
+                return False;
+            }
+            ItemStack[] outputStacks = new ItemStack[outputMap.size()];
+            int[] outputChances = new int[outputMap.size()];
+            
+            int i = 0;
+            for (Map.Entry<ItemStack, Integer> o : outputMap.entrySet()) {
+                outputStacks[i] = o.getKey();
+                outputChances[i] = 10000*o.getValue()/totalWeight;
+                i++;
+            }
+            
+            GTPPRecipeMaps.thaumoArborealConverterFakeRecipes.addFakeRecipe(
+                false,
+                new GTRecipe.GTRecipe_WithAlt(
+                    false,
+                    saplingIn,
+                    outputStacks,
+                    specialStack,
+                    null,
+                    outputChances,
+                    null,
+                    null,
+                    null,
+                    null,
+                    TICKS_PER_OPERATION,
+                    0,
+                    recipeCount, // special value, also sorts recipes correctly in order of addition.
+                    null));
+            return GTPPRecipeMaps.thaumoArborealConverterFakeRecipes
+                .getAllRecipes()
+                .size() > recipeCount;
         }
 }

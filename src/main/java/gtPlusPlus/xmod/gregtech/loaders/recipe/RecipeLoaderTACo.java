@@ -30,6 +30,9 @@ public class RecipeLoaderTACo {
         GTModHandler.getModItem(Mods.ThaumicBases.ID, "genLeaves", 1, 1),
         null);*/
 
+    // TODO
+    // Peaceful meat and animal drops
+
     // Nether
     MTEThaumoArborealConverter.registerTreeProducts(
         GTModHandler.getModItem(Mods.ThaumicBases.ID, "goldenOakSapling", 1, 2),
