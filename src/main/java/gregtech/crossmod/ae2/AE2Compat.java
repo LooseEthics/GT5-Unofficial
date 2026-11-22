@@ -26,6 +26,7 @@ import gregtech.api.covers.CoverRegistry;
 import gregtech.api.enums.ItemList;
 import gregtech.api.enums.OrePrefixes;
 import gregtech.api.items.ItemShapeExtruder;
+import gregtech.api.items.ItemShapeMold;
 import gregtech.api.objects.AE2DigitalChestHandler;
 import gregtech.api.objects.AE2NonconsumableHatchHandler;
 import gregtech.common.covers.CoverFacadeAE;
@@ -84,20 +85,13 @@ public final class AE2Compat {
             .registries()
             .blockingModeIgnoreItem();
 
-        ItemList[] nonConsumables = new ItemList[] { ItemList.Shape_Mold_Bottle, ItemList.Shape_Mold_Plate,
-            ItemList.Shape_Mold_Ingot, ItemList.Shape_Mold_Casing, ItemList.Shape_Mold_Gear,
-            ItemList.Shape_Mold_Gear_Small, ItemList.Shape_Mold_Credit, ItemList.Shape_Mold_Nugget,
-            ItemList.Shape_Mold_Block, ItemList.Shape_Mold_Ball, ItemList.Shape_Mold_Bun, ItemList.Shape_Mold_Bread,
-            ItemList.Shape_Mold_Baguette, ItemList.Shape_Mold_Cylinder, ItemList.Shape_Mold_Anvil,
-            ItemList.Shape_Mold_Arrow, ItemList.Shape_Mold_Name, ItemList.Shape_Mold_Rod, ItemList.Shape_Mold_Bolt,
-            ItemList.Shape_Mold_Round, ItemList.Shape_Mold_Screw, ItemList.Shape_Mold_Ring,
-            ItemList.Shape_Mold_Rod_Long, ItemList.Shape_Mold_Rotor, ItemList.Shape_Mold_Turbine_Blade,
-            ItemList.Shape_Mold_Pipe_Tiny, ItemList.Shape_Mold_Pipe_Small, ItemList.Shape_Mold_Pipe_Medium,
-            ItemList.Shape_Mold_Pipe_Large, ItemList.Shape_Mold_Pipe_Huge, ItemList.Shape_Mold_ToolHeadDrill,
-
-            ItemList.Shape_Slicer_Flat, ItemList.Shape_Slicer_Stripes };
+        ItemList[] nonConsumables = new ItemList[] { ItemList.Shape_Slicer_Flat, ItemList.Shape_Slicer_Stripes };
         for (ItemList item : nonConsumables) {
             registry.register(item.get(1));
+        }
+
+        for (ItemShapeMold mold : ItemShapeMold.getSolidifierMolds()) {
+            registry.register(new ItemStack(mold, 1));
         }
 
         for (ItemShapeExtruder shape : ItemShapeExtruder.shapes) {

@@ -506,7 +506,7 @@ public class ProcessingToolHead implements gregtech.api.interfaces.IOreRecipeReg
                             OrePrefixes.plate.get(Materials.Steel) });
                     if (aMaterial.mStandardMoltenFluid != null) {
                         GTValues.RA.stdBuilder()
-                            .itemInputs(ItemList.Shape_Mold_ToolHeadDrill.get(0))
+                            .itemInputs(ItemList.Shape_Mold_Drill.get(0))
                             .itemOutputs(GTOreDictUnificator.get(OrePrefixes.toolHeadDrill, aMaterial, 1L))
                             .fluidInputs(aMaterial.getMolten(4 * INGOTS))
                             .duration(5 * SECONDS)

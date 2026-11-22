@@ -26,14 +26,16 @@ public enum GGItemList implements IItemContainer {
     SingleUseScrewdriver,
     SingleUseSaw,
 
-    SingleUseFileMold,
-    SingleUseWrenchMold,
-    SingleUseCrowbarMold,
-    SingleUseWireCutterMold,
-    SingleUseHardHammerMold,
-    SingleUseSoftMalletMold,
-    SingleUseScrewdriverMold,
-    SingleUseSawMold,
+    // Deprecated during 2.10.x development cycle
+    // SingleUseFileMold,
+    // SingleUseWrenchMold,
+    // SingleUseCrowbarMold,
+    // SingleUseWireCutterMold,
+    // SingleUseHardHammerMold,
+    // SingleUseSoftMalletMold,
+    // SingleUseScrewdriverMold,
+    // SingleUseSawMold,
+
     // ordered section ends
     // endregion
     //

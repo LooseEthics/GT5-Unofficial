@@ -332,37 +332,6 @@ import static gregtech.common.items.IDMetaItem01.Sensor_UV;
 import static gregtech.common.items.IDMetaItem01.Sensor_UXV;
 import static gregtech.common.items.IDMetaItem01.Sensor_ZPM;
 import static gregtech.common.items.IDMetaItem01.Shape_Empty;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Anvil;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Arrow;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Baguette;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Ball;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Block;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Bolt;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Bottle;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Bread;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Bun;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Casing;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Credit;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Cylinder;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Gear;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Gear_Small;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Ingot;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Name;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Nugget;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Pipe_Huge;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Pipe_Large;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Pipe_Medium;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Pipe_Small;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Pipe_Tiny;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Plate;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Ring;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Rod;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Rod_Long;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Rotor;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Round;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Screw;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Tool_Head_Drill;
-import static gregtech.common.items.IDMetaItem01.Shape_Mold_Turbine_Blade;
 import static gregtech.common.items.IDMetaItem01.Shape_Slicer_Flat;
 import static gregtech.common.items.IDMetaItem01.Shape_Slicer_Stripes;
 import static gregtech.common.items.IDMetaItem01.Spray_Color_0;
@@ -755,161 +724,162 @@ public class MetaGeneratedItem01 extends MetaGeneratedItemX32 implements IItemFi
                 new TCAspects.TC_AspectStack(TCAspects.FABRICO, 4L),
                 new TCAspects.TC_AspectStack(TCAspects.METALLUM, 4L)));
 
-        ItemList.Shape_Mold_Plate.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Plate.ID,
-                "gt.item.shape_mold.plate.name",
-                "gt.item.shape_mold.plate.tooltip"));
-        ItemList.Shape_Mold_Casing.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Casing.ID,
-                "gt.item.shape_mold.casing.name",
-                "gt.item.shape_mold.casing.tooltip"));
-        ItemList.Shape_Mold_Gear.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Gear.ID,
-                "gt.item.shape_mold.gear.name",
-                "gt.item.shape_mold.gear.tooltip"));
-        ItemList.Shape_Mold_Credit.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Credit.ID,
-                "gt.item.shape_mold.credit.name",
-                "gt.item.shape_mold.credit.tooltip"));
-        ItemList.Shape_Mold_Bottle.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Bottle.ID,
-                "gt.item.shape_mold.bottle.name",
-                "gt.item.shape_mold.bottle.tooltip"));
-        ItemList.Shape_Mold_Ingot.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Ingot.ID,
-                "gt.item.shape_mold.ingot.name",
-                "gt.item.shape_mold.ingot.tooltip"));
-        ItemList.Shape_Mold_Ball.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Ball.ID,
-                "gt.item.shape_mold.ball.name",
-                "gt.item.shape_mold.ball.tooltip"));
-        ItemList.Shape_Mold_Block.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Block.ID,
-                "gt.item.shape_mold.block.name",
-                "gt.item.shape_mold.block.tooltip"));
-        ItemList.Shape_Mold_Nugget.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Nugget.ID,
-                "gt.item.shape_mold.nugget.name",
-                "gt.item.shape_mold.nugget.tooltip"));
-        ItemList.Shape_Mold_Bun.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Bun.ID,
-                "gt.item.shape_mold.bun.name",
-                "gt.item.shape_mold.bun.tooltip"));
-        ItemList.Shape_Mold_Bread.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Bread.ID,
-                "gt.item.shape_mold.bread.name",
-                "gt.item.shape_mold.bread.tooltip"));
-        ItemList.Shape_Mold_Baguette.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Baguette.ID,
-                "gt.item.shape_mold.baguette.name",
-                "gt.item.shape_mold.baguette.tooltip"));
-        ItemList.Shape_Mold_Cylinder.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Cylinder.ID,
-                "gt.item.shape_mold.cylinder.name",
-                "gt.item.shape_mold.cylinder.tooltip"));
-        ItemList.Shape_Mold_Anvil.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Anvil.ID,
-                "gt.item.shape_mold.anvil.name",
-                "gt.item.shape_mold.anvil.tooltip"));
-        ItemList.Shape_Mold_Name.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Name.ID,
-                "gt.item.shape_mold.name.name",
-                "gt.item.shape_mold.name.tooltip"));
-        ItemList.Shape_Mold_Arrow.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Arrow.ID,
-                "gt.item.shape_mold.arrow.name",
-                "gt.item.shape_mold.arrow.tooltip"));
-        ItemList.Shape_Mold_Gear_Small.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Gear_Small.ID,
-                "gt.item.shape_mold.gear_small.name",
-                "gt.item.shape_mold.gear_small.tooltip"));
-        ItemList.Shape_Mold_Rod.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Rod.ID,
-                "gt.item.shape_mold.rod.name",
-                "gt.item.shape_mold.rod.tooltip"));
-        ItemList.Shape_Mold_Bolt.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Bolt.ID,
-                "gt.item.shape_mold.bolt.name",
-                "gt.item.shape_mold.bolt.tooltip"));
-        ItemList.Shape_Mold_Round.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Round.ID,
-                "gt.item.shape_mold.round.name",
-                "gt.item.shape_mold.round.tooltip"));
-        ItemList.Shape_Mold_Screw.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Screw.ID,
-                "gt.item.shape_mold.screw.name",
-                "gt.item.shape_mold.screw.tooltip"));
-        ItemList.Shape_Mold_Ring.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Ring.ID,
-                "gt.item.shape_mold.ring.name",
-                "gt.item.shape_mold.ring.tooltip"));
-        ItemList.Shape_Mold_Rod_Long.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Rod_Long.ID,
-                "gt.item.shape_mold.rod_long.name",
-                "gt.item.shape_mold.rod_long.tooltip"));
-        ItemList.Shape_Mold_Rotor.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Rotor.ID,
-                "gt.item.shape_mold.rotor.name",
-                "gt.item.shape_mold.rotor.tooltip"));
-        ItemList.Shape_Mold_Turbine_Blade.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Turbine_Blade.ID,
-                "gt.item.shape_mold.turbine_blade.name",
-                "gt.item.shape_mold.turbine_blade.tooltip"));
-        ItemList.Shape_Mold_Pipe_Tiny.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Pipe_Tiny.ID,
-                "gt.item.shape_mold.pipe_tiny.name",
-                "gt.item.shape_mold.pipe_tiny.tooltip"));
-        ItemList.Shape_Mold_Pipe_Small.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Pipe_Small.ID,
-                "gt.item.shape_mold.pipe_small.name",
-                "gt.item.shape_mold.pipe_small.tooltip"));
-        ItemList.Shape_Mold_Pipe_Medium.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Pipe_Medium.ID,
-                "gt.item.shape_mold.pipe_medium.name",
-                "gt.item.shape_mold.pipe_medium.tooltip"));
-        ItemList.Shape_Mold_Pipe_Large.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Pipe_Large.ID,
-                "gt.item.shape_mold.pipe_large.name",
-                "gt.item.shape_mold.pipe_large.tooltip"));
-        ItemList.Shape_Mold_Pipe_Huge.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Pipe_Huge.ID,
-                "gt.item.shape_mold.pipe_huge.name",
-                "gt.item.shape_mold.pipe_huge.tooltip"));
-        ItemList.Shape_Mold_ToolHeadDrill.set(
-            addItemWithLocalizationKeys(
-                Shape_Mold_Tool_Head_Drill.ID,
-                "gt.item.shape_mold.tool_head_drill.name",
-                "gt.item.shape_mold.tool_head_drill.tooltip"));
+        // Deprecated during 2.10.x development cycle
+        // ItemList.Shape_Mold_Plate.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Plate.ID,
+        // "gt.item.shape_mold.plate.name",
+        // "gt.item.shape_mold.plate.tooltip"));
+        // ItemList.Shape_Mold_Casing.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Casing.ID,
+        // "gt.item.shape_mold.casing.name",
+        // "gt.item.shape_mold.casing.tooltip"));
+        // ItemList.Shape_Mold_Gear.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Gear.ID,
+        // "gt.item.shape_mold.gear.name",
+        // "gt.item.shape_mold.gear.tooltip"));
+        // ItemList.Shape_Mold_Credit.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Credit.ID,
+        // "gt.item.shape_mold.credit.name",
+        // "gt.item.shape_mold.credit.tooltip"));
+        // ItemList.Shape_Mold_Bottle.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Bottle.ID,
+        // "gt.item.shape_mold.bottle.name",
+        // "gt.item.shape_mold.bottle.tooltip"));
+        // ItemList.Shape_Mold_Ingot.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Ingot.ID,
+        // "gt.item.shape_mold.ingot.name",
+        // "gt.item.shape_mold.ingot.tooltip"));
+        // ItemList.Shape_Mold_Ball.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Ball.ID,
+        // "gt.item.shape_mold.ball.name",
+        // "gt.item.shape_mold.ball.tooltip"));
+        // ItemList.Shape_Mold_Block.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Block.ID,
+        // "gt.item.shape_mold.block.name",
+        // "gt.item.shape_mold.block.tooltip"));
+        // ItemList.Shape_Mold_Nugget.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Nugget.ID,
+        // "gt.item.shape_mold.nugget.name",
+        // "gt.item.shape_mold.nugget.tooltip"));
+        // ItemList.Shape_Mold_Bun.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Bun.ID,
+        // "gt.item.shape_mold.bun.name",
+        // "gt.item.shape_mold.bun.tooltip"));
+        // ItemList.Shape_Mold_Bread.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Bread.ID,
+        // "gt.item.shape_mold.bread.name",
+        // "gt.item.shape_mold.bread.tooltip"));
+        // ItemList.Shape_Mold_Baguette.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Baguette.ID,
+        // "gt.item.shape_mold.baguette.name",
+        // "gt.item.shape_mold.baguette.tooltip"));
+        // ItemList.Shape_Mold_Cylinder.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Cylinder.ID,
+        // "gt.item.shape_mold.cylinder.name",
+        // "gt.item.shape_mold.cylinder.tooltip"));
+        // ItemList.Shape_Mold_Anvil.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Anvil.ID,
+        // "gt.item.shape_mold.anvil.name",
+        // "gt.item.shape_mold.anvil.tooltip"));
+        // ItemList.Shape_Mold_Name.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Name.ID,
+        // "gt.item.shape_mold.name.name",
+        // "gt.item.shape_mold.name.tooltip"));
+        // ItemList.Shape_Mold_Arrow.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Arrow.ID,
+        // "gt.item.shape_mold.arrow.name",
+        // "gt.item.shape_mold.arrow.tooltip"));
+        // ItemList.Shape_Mold_Gear_Small.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Gear_Small.ID,
+        // "gt.item.shape_mold.gear_small.name",
+        // "gt.item.shape_mold.gear_small.tooltip"));
+        // ItemList.Shape_Mold_Rod.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Rod.ID,
+        // "gt.item.shape_mold.rod.name",
+        // "gt.item.shape_mold.rod.tooltip"));
+        // ItemList.Shape_Mold_Bolt.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Bolt.ID,
+        // "gt.item.shape_mold.bolt.name",
+        // "gt.item.shape_mold.bolt.tooltip"));
+        // ItemList.Shape_Mold_Round.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Round.ID,
+        // "gt.item.shape_mold.round.name",
+        // "gt.item.shape_mold.round.tooltip"));
+        // ItemList.Shape_Mold_Screw.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Screw.ID,
+        // "gt.item.shape_mold.screw.name",
+        // "gt.item.shape_mold.screw.tooltip"));
+        // ItemList.Shape_Mold_Ring.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Ring.ID,
+        // "gt.item.shape_mold.ring.name",
+        // "gt.item.shape_mold.ring.tooltip"));
+        // ItemList.Shape_Mold_Rod_Long.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Rod_Long.ID,
+        // "gt.item.shape_mold.rod_long.name",
+        // "gt.item.shape_mold.rod_long.tooltip"));
+        // ItemList.Shape_Mold_Rotor.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Rotor.ID,
+        // "gt.item.shape_mold.rotor.name",
+        // "gt.item.shape_mold.rotor.tooltip"));
+        // ItemList.Shape_Mold_Turbine_Blade.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Turbine_Blade.ID,
+        // "gt.item.shape_mold.turbine_blade.name",
+        // "gt.item.shape_mold.turbine_blade.tooltip"));
+        // ItemList.Shape_Mold_Pipe_Tiny.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Pipe_Tiny.ID,
+        // "gt.item.shape_mold.pipe_tiny.name",
+        // "gt.item.shape_mold.pipe_tiny.tooltip"));
+        // ItemList.Shape_Mold_Pipe_Small.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Pipe_Small.ID,
+        // "gt.item.shape_mold.pipe_small.name",
+        // "gt.item.shape_mold.pipe_small.tooltip"));
+        // ItemList.Shape_Mold_Pipe_Medium.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Pipe_Medium.ID,
+        // "gt.item.shape_mold.pipe_medium.name",
+        // "gt.item.shape_mold.pipe_medium.tooltip"));
+        // ItemList.Shape_Mold_Pipe_Large.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Pipe_Large.ID,
+        // "gt.item.shape_mold.pipe_large.name",
+        // "gt.item.shape_mold.pipe_large.tooltip"));
+        // ItemList.Shape_Mold_Pipe_Huge.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Pipe_Huge.ID,
+        // "gt.item.shape_mold.pipe_huge.name",
+        // "gt.item.shape_mold.pipe_huge.tooltip"));
+        // ItemList.Shape_Mold_ToolHeadDrill.set(
+        // addItemWithLocalizationKeys(
+        // Shape_Mold_Tool_Head_Drill.ID,
+        // "gt.item.shape_mold.tool_head_drill.name",
+        // "gt.item.shape_mold.tool_head_drill.tooltip"));
 
         ItemList.Shape_Slicer_Flat.set(
             addItemWithLocalizationKeys(

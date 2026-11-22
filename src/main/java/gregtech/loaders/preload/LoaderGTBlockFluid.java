@@ -49,6 +49,7 @@ import gregtech.api.items.ItemBreederCell;
 import gregtech.api.items.ItemCoolantCellIC;
 import gregtech.api.items.ItemRadioactiveCellIC;
 import gregtech.api.items.ItemShapeExtruder;
+import gregtech.api.items.ItemShapeMold;
 import gregtech.api.metatileentity.BaseMetaPipeEntity;
 import gregtech.api.metatileentity.BaseMetaTileEntity;
 import gregtech.api.util.GTDataUtils;
@@ -2760,6 +2761,47 @@ public class LoaderGTBlockFluid implements Runnable {
         ItemList.Shape_Extruder_Boat.set(new ItemShapeExtruder("boat"));
         ItemList.Shape_Extruder_Pellet.set(new ItemShapeExtruder("pellet"));
         ItemList.Shape_Extruder_Shaft.set(new ItemShapeExtruder("shaft"));
+
+        // Solidifier molds
+        ItemList.Shape_Mold_Plate.set(new ItemShapeMold("plate", true));
+        ItemList.Shape_Mold_Casing.set(new ItemShapeMold("casing", true));
+        ItemList.Shape_Mold_Gear.set(new ItemShapeMold("gear", true));
+        ItemList.Shape_Mold_Credit.set(new ItemShapeMold("credit", false));
+        ItemList.Shape_Mold_Bottle.set(new ItemShapeMold("bottle", true));
+        ItemList.Shape_Mold_Ingot.set(new ItemShapeMold("ingot", true));
+        ItemList.Shape_Mold_Ball.set(new ItemShapeMold("ball", true));
+        ItemList.Shape_Mold_Block.set(new ItemShapeMold("block", true));
+        ItemList.Shape_Mold_Nugget.set(new ItemShapeMold("nugget", true));
+        ItemList.Shape_Mold_Bun.set(new ItemShapeMold("bun", false));
+        ItemList.Shape_Mold_Bread.set(new ItemShapeMold("bread", false));
+        ItemList.Shape_Mold_Baguette.set(new ItemShapeMold("baguette", false));
+        ItemList.Shape_Mold_Cylinder.set(new ItemShapeMold("cylinder", true));
+        ItemList.Shape_Mold_Anvil.set(new ItemShapeMold("anvil", true));
+        ItemList.Shape_Mold_Name.set(new ItemShapeMold("name", false));
+        ItemList.Shape_Mold_Arrow.set(new ItemShapeMold("arrow", false)); // This has no uses
+        ItemList.Shape_Mold_Gear_Small.set(new ItemShapeMold("gear_small", true));
+        ItemList.Shape_Mold_Rod.set(new ItemShapeMold("rod", true));
+        ItemList.Shape_Mold_Bolt.set(new ItemShapeMold("bolt", true));
+        ItemList.Shape_Mold_Round.set(new ItemShapeMold("round", true));
+        ItemList.Shape_Mold_Screw.set(new ItemShapeMold("screw", true));
+        ItemList.Shape_Mold_Ring.set(new ItemShapeMold("ring", true));
+        ItemList.Shape_Mold_Rod_Long.set(new ItemShapeMold("rod_long", true));
+        ItemList.Shape_Mold_Rotor.set(new ItemShapeMold("rotor", true));
+        ItemList.Shape_Mold_Turbine_Blade.set(new ItemShapeMold("turbine_blade", true));
+        ItemList.Shape_Mold_Pipe_Tiny.set(new ItemShapeMold("pipe_tiny", true));
+        ItemList.Shape_Mold_Pipe_Small.set(new ItemShapeMold("pipe_small", true));
+        ItemList.Shape_Mold_Pipe_Medium.set(new ItemShapeMold("pipe_medium", true));
+        ItemList.Shape_Mold_Pipe_Large.set(new ItemShapeMold("pipe_large", true));
+        ItemList.Shape_Mold_Pipe_Huge.set(new ItemShapeMold("pipe_huge", true));
+        ItemList.Shape_Mold_Drill.set(new ItemShapeMold("drill", true));
+        ItemList.Shape_Mold_File.set(new ItemShapeMold("file", true));
+        ItemList.Shape_Mold_Wrench.set(new ItemShapeMold("wrench", true));
+        ItemList.Shape_Mold_Crowbar.set(new ItemShapeMold("crowbar", true));
+        ItemList.Shape_Mold_Wirecutter.set(new ItemShapeMold("wirecutter", true));
+        ItemList.Shape_Mold_Hammer.set(new ItemShapeMold("hammer", true));
+        ItemList.Shape_Mold_Mallet.set(new ItemShapeMold("mallet", true));
+        ItemList.Shape_Mold_Screwdriver.set(new ItemShapeMold("screwdriver", true));
+        ItemList.Shape_Mold_Saw.set(new ItemShapeMold("saw", true));
 
     }
 }

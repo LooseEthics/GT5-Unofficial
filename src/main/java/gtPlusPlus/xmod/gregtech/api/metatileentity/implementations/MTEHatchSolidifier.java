@@ -3,9 +3,9 @@ package gtPlusPlus.xmod.gregtech.api.metatileentity.implementations;
 import static com.gtnewhorizon.gtnhlib.util.numberformatting.NumberFormatUtil.formatNumber;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
@@ -15,13 +15,12 @@ import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 
-import ggfab.GGItemList;
-import gregtech.api.enums.ItemList;
 import gregtech.api.interfaces.IConfigurationCircuitSupport;
 import gregtech.api.interfaces.INonConsumedItemDisplay;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.items.ItemShapeMold;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchInput;
 import gregtech.api.util.GTSplit;
@@ -35,43 +34,10 @@ public class MTEHatchSolidifier extends MTEHatchInput implements IConfigurationC
     public static final int moldSlot = 2;
     public static final int circuitSlot = 3;
 
-    public static final ArrayList<ItemStack> solidifierMolds = new ArrayList<>(
-        Arrays.asList(
-            ItemList.Shape_Mold_Bottle.get(1),
-            ItemList.Shape_Mold_Plate.get(1),
-            ItemList.Shape_Mold_Ingot.get(1),
-            ItemList.Shape_Mold_Casing.get(1),
-            ItemList.Shape_Mold_Gear.get(1),
-            ItemList.Shape_Mold_Gear_Small.get(1),
-            ItemList.Shape_Mold_Credit.get(1),
-            ItemList.Shape_Mold_Nugget.get(1),
-            ItemList.Shape_Mold_Block.get(1),
-            ItemList.Shape_Mold_Ball.get(1),
-            ItemList.Shape_Mold_Cylinder.get(1),
-            ItemList.Shape_Mold_Anvil.get(1),
-            ItemList.Shape_Mold_Arrow.get(1),
-            ItemList.Shape_Mold_Rod.get(1),
-            ItemList.Shape_Mold_Bolt.get(1),
-            ItemList.Shape_Mold_Round.get(1),
-            ItemList.Shape_Mold_Screw.get(1),
-            ItemList.Shape_Mold_Ring.get(1),
-            ItemList.Shape_Mold_Rod_Long.get(1),
-            ItemList.Shape_Mold_Rotor.get(1),
-            ItemList.Shape_Mold_Turbine_Blade.get(1),
-            ItemList.Shape_Mold_Pipe_Tiny.get(1),
-            ItemList.Shape_Mold_Pipe_Small.get(1),
-            ItemList.Shape_Mold_Pipe_Medium.get(1),
-            ItemList.Shape_Mold_Pipe_Large.get(1),
-            ItemList.Shape_Mold_Pipe_Huge.get(1),
-            ItemList.Shape_Mold_ToolHeadDrill.get(1),
-            GGItemList.SingleUseFileMold.get(1),
-            GGItemList.SingleUseWrenchMold.get(1),
-            GGItemList.SingleUseCrowbarMold.get(1),
-            GGItemList.SingleUseWireCutterMold.get(1),
-            GGItemList.SingleUseHardHammerMold.get(1),
-            GGItemList.SingleUseSoftMalletMold.get(1),
-            GGItemList.SingleUseScrewdriverMold.get(1),
-            GGItemList.SingleUseSawMold.get(1)));
+    public static final List<ItemStack> solidifierMolds = ItemShapeMold.getSolidifierMolds()
+        .stream()
+        .map(mold -> new ItemStack(mold, 1))
+        .collect(Collectors.toList());
 
     public MTEHatchSolidifier(int aID, String aName, String aNameRegional, int aTier) {
         super(aID, aName, aNameRegional, aTier);

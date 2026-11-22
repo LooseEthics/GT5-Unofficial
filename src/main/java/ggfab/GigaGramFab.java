@@ -34,6 +34,7 @@ import ggfab.mte.MTEAdvAssLine;
 import ggfab.mte.MTELinkedInputBus;
 import ggfab.util.GGUtils;
 import gregtech.api.GregTechAPI;
+import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Mods;
 import gregtech.api.enums.OrePrefixes;
 
@@ -121,7 +122,7 @@ public class GigaGramFab {
                     tool,
                     singleUseTool.toolDictName.name()));
 
-            GGItemList mold = singleUseTool.mold;
+            ItemList mold = singleUseTool.mold;
             String moldLabel = "Mold (" + GGUtils.processSentence(tool.name() + ")", ' ', true, true);
             mold.set(i1.addItem(singleUseTool.moldID, moldLabel, null, mold, mold.name()));
         }
