@@ -1,20 +1,24 @@
 package gregtech.api.enums;
 
+import static gregtech.GTLoggers.GT_FML_LOGGER;
 import static gregtech.api.enums.GTValues.NI;
 import static gregtech.api.util.GTRecipeBuilder.WILDCARD;
 
+import java.util.List;
 import java.util.Locale;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.fluids.Fluid;
+
+import com.google.common.collect.ImmutableList;
 
 import gregtech.GTMod;
 import gregtech.api.interfaces.IItemContainer;
 import gregtech.api.util.GTLanguageManager;
-import gregtech.api.util.GTLog;
 import gregtech.api.util.GTModHandler;
 import gregtech.api.util.GTOreDictUnificator;
 import gregtech.api.util.GTUtility;
@@ -78,15 +82,11 @@ public enum ItemList implements IItemContainer {
     IC2_Resin,
     IC2_Plantball,
     IC2_PlantballCompressed,
+    IC2_BioChaff,
     IC2_Energium_Dust,
     IC2_Compressed_Coal_Ball,
     IC2_Compressed_Coal_Chunk,
     IC2_Fuel_Rod_Empty,
-    IC2_Uranium_238,
-    IC2_Uranium_235,
-    IC2_Uranium_235_Small,
-    IC2_Plutonium,
-    IC2_Plutonium_Small,
     IC2_Uranium_Fuel,
     IC2_MOX_Fuel,
     IC2_Food_Can_Empty,
@@ -104,6 +104,7 @@ public enum ItemList implements IItemContainer {
     IC2_LapotronCrystal,
     Tool_Vajra,
     Vajra_Core,
+    NetworkAnalyzer,
     Magnetron,
     Item_Power_Goggles,
     Shape_Empty,
@@ -147,7 +148,6 @@ public enum ItemList implements IItemContainer {
     Shape_Extruder_Rod,
     Shape_Extruder_Bolt,
     Shape_Extruder_Ingot,
-    Shape_Extruder_Wire, // DEPRECATED, remove in next major version
     Shape_Extruder_Casing,
     Shape_Extruder_Pipe_Tiny,
     Shape_Extruder_Pipe_Small,
@@ -167,7 +167,15 @@ public enum ItemList implements IItemContainer {
     Shape_Extruder_Rotor,
     Shape_Extruder_Turbine_Blade,
     Shape_Extruder_Small_Gear,
-    Shape_Extruder_ToolHeadDrill,
+    Shape_Extruder_Drill,
+    Shape_Extruder_Boat,
+    Shape_Extruder_Pellet,
+    Shape_Extruder_Shaft,
+
+    // IC2 Replacements
+    PadBouncy,
+    PadSticky,
+    FenceIron,
 
     Credit_Copper,
     Credit_Iron,
@@ -222,7 +230,7 @@ public enum ItemList implements IItemContainer {
     Bottle_Vodka,
     Bottle_Leninade,
     Bottle_Mineral_Water,
-    Bottle_Salty_Water,
+    Bottle_Salt_Water,
     Bottle_Reed_Water,
     Bottle_Rum,
     Bottle_Pirate_Brew,
@@ -632,12 +640,14 @@ public enum ItemList implements IItemContainer {
     Tool_Hoe_Steel,
 
     Spray_Empty,
+    // region unused
     Spray_Bug,
     Spray_Ice,
     Spray_Hardener,
     Spray_CFoam,
     Spray_Pepper,
     Spray_Hydration,
+    // endregion unused
 
     Color_00,
     Color_01,
@@ -694,6 +704,7 @@ public enum ItemList implements IItemContainer {
 
     Spray_Color_Remover_Empty,
 
+    // region unused
     Armor_Cheat,
     Armor_Cloaking,
     Armor_Lamp,
@@ -707,8 +718,13 @@ public enum ItemList implements IItemContainer {
     Component_Turbine_Magnalium,
     Component_Turbine_TungstenSteel,
     Component_Turbine_Carbon,
+    // endregion unused
     Component_LavaFilter,
     Component_Sawblade_Diamond,
+    T1Sawblade,
+    T2Sawblade,
+    T3Sawblade,
+    T4Sawblade,
     Component_Grinder_Diamond,
     Component_Grinder_Tungsten,
     Component_Filter,
@@ -781,7 +797,12 @@ public enum ItemList implements IItemContainer {
     Casing_LuV,
     Casing_ZPM,
     Casing_UV,
-    Casing_MAX,
+    Casing_UHV,
+    Casing_UEV,
+    Casing_UIV,
+    Casing_UMV,
+    Casing_UXV,
+    Casing_MAXV,
     Casing_BronzePlatedBricks,
     Casing_HeatProof,
     Casing_Dim_Trans,
@@ -840,6 +861,10 @@ public enum ItemList implements IItemContainer {
     Casing_Advanced_Iridium,
     Casing_Magical,
 
+    Casing_Strengthened_Inanimate,
+    Casing_Precise_Stationary,
+    Casing_Ultimately_Static,
+
     Hull_ULV,
     Hull_LV,
     Hull_MV,
@@ -849,7 +874,12 @@ public enum ItemList implements IItemContainer {
     Hull_LuV,
     Hull_ZPM,
     Hull_UV,
-    Hull_MAX,
+    Hull_UHV,
+    Hull_UEV,
+    Hull_UIV,
+    Hull_UMV,
+    Hull_UXV,
+    Hull_MAXV,
 
     CompressedFireclay,
     Firebrick,
@@ -1078,6 +1108,7 @@ public enum ItemList implements IItemContainer {
     Hatch_DataAccess_UV,
 
     Hatch_HeatSensor,
+    Hatch_ToxicResidueSensor,
     Hatch_BlackHoleUtility,
 
     Battery_Buffer_1by1_ULV,
@@ -1135,10 +1166,6 @@ public enum ItemList implements IItemContainer {
     Locker_UV,
     Locker_MAX,
 
-    Machine_Multi_LargeBoiler_Bronze,
-    Machine_Multi_LargeBoiler_Steel,
-    Machine_Multi_LargeBoiler_Titanium,
-    Machine_Multi_LargeBoiler_TungstenSteel,
     Machine_Multi_BlastFurnace,
     Machine_Multi_PlasmaForge,
     Machine_Multi_ImplosionCompressor,
@@ -1460,7 +1487,6 @@ public enum ItemList implements IItemContainer {
 
     Machine_Multi_Canner,
 
-    Machine_Fluid_Shaper, // DEPRECATED. Remove after 2.9
     Machine_Mass_Solidifier,
     Casing_Fluid_Solidifier,
     Radiator_Fluid_Solidifier,
@@ -1500,6 +1526,7 @@ public enum ItemList implements IItemContainer {
     Black_Hole_Opener,
     Black_Hole_Closer,
     Black_Hole_Stabilizer,
+    Supermassive_Black_Hole_Opener,
 
     Machine_Multi_IndustrialBrewery,
 
@@ -1522,7 +1549,7 @@ public enum ItemList implements IItemContainer {
     Hatch_VacuumConveyor_Output,
     VacuumConveyorPipe,
     NanoChipModule_AssemblyMatrix,
-    NanoChipModule_SMDProcessor,
+    NanoChipModule_PartProcessor,
     NanoChipModule_BoardProcessor,
     NanoChipModule_EtchingArray,
     NanoChipModule_CuttingChamber,
@@ -1610,7 +1637,6 @@ public enum ItemList implements IItemContainer {
 
     Distillation_Tower,
     Energy_LapotronicOrb2,
-    Ore_Processor,
     ZPM6,
     ZPM5,
     ZPM4,
@@ -1642,6 +1668,7 @@ public enum ItemList implements IItemContainer {
     Super_Chest_IV,
 
     Debug_Fluid_Tank,
+    Debug_Chest,
 
     Long_Distance_Pipeline_Fluid,
     Long_Distance_Pipeline_Item,
@@ -1667,11 +1694,7 @@ public enum ItemList implements IItemContainer {
     Cover_RedstoneTransmitterInternal,
     Cover_RedstoneReceiver,
     Cover_WirelessController,
-
-    LargeSteamTurbine,
-    LargeGasTurbine,
-    LargeHPSteamTurbine,
-    LargePlasmaTurbine,
+    Cover_AdvancedWirelessController,
 
     Ingot_Heavy1,
     Ingot_Heavy2,
@@ -1738,6 +1761,17 @@ public enum ItemList implements IItemContainer {
     Casing_Beryllium_Integrated_Reactor,
     Casing_Refined_Graphite,
 
+    CoherencePreservingPlasmaConduit,
+    ElectromagneticallyIsolatedCasing,
+    FineStructureConstantManipulator,
+    ConflictInducementCasing,
+    PeaceEnforcementCasing,
+    CondensateTransformativeCoil,
+    CondensateGuidanceCoil,
+    ElectromagneticWaveguide,
+
+    ReinforcedGlass,
+
     MobRep_LV,
     MobRep_MV,
     MobRep_HV,
@@ -1753,6 +1787,7 @@ public enum ItemList implements IItemContainer {
     MagLevPython_HV,
     MagLevPython_EV,
 
+    Block_ReinforcedConcrete,
     Block_BronzePlate,
     Block_SteelPlate,
     Block_TitaniumPlate,
@@ -1775,14 +1810,12 @@ public enum ItemList implements IItemContainer {
     OilDrill3,
 
     OilDrill4,
-    OilDrillInfinite,
     ConcreteBackfiller1,
     ConcreteBackfiller2,
     OreDrill1,
     OreDrill2,
     OreDrill3,
     OreDrill4,
-    PyrolyseOven,
     OilCracker,
     SolarFactory,
     NanoForge,
@@ -1809,18 +1842,18 @@ public enum ItemList implements IItemContainer {
 
     Block_Powderbarrel,
     GelledToluene,
+    Dynamite,
 
     FluidFilter,
     ItemFilter_Export,
     ItemFilter_Import,
     CuringOven,
     Machine_Multi_Assemblyline,
-    Machine_Multi_DieselEngine,
-    Machine_Multi_ExtremeDieselEngine,
     QuantumEye,
     QuantumStar,
     Gravistar,
     NuclearStar,
+    PseudoStar,
     Block_SSFUEL,
     Block_MSSFUEL,
     SFMixture,
@@ -1914,6 +1947,9 @@ public enum ItemList implements IItemContainer {
     Circuit_Board_Bio,
     Circuit_Board_Bio_Ultra,
     Circuit_Board_Optical,
+    Circuit_Board_Exotic,
+    Circuit_Board_Cosmic,
+    Circuit_Board_Transcendent,
 
     Circuit_Parts_Resistor,
     Circuit_Parts_ResistorSMD,
@@ -1949,6 +1985,7 @@ public enum ItemList implements IItemContainer {
     Circuit_Silicon_Wafer5,
     Circuit_Silicon_Wafer6,
     Circuit_Silicon_Wafer7,
+    Circuit_Silicon_Wafer8,
     Circuit_Wafer_ILC,
     Circuit_Chip_ILC,
     Circuit_Wafer_Ram,
@@ -1988,6 +2025,16 @@ public enum ItemList implements IItemContainer {
     Circuit_Wafer_QuantumCPU,
     Circuit_Chip_QuantumCPU,
     Circuit_Wafer_Bioware,
+    Circuit_Wafer_FPIC,
+    Circuit_Chip_FPIC,
+    Circuit_Wafer_APIC,
+    Circuit_Chip_APIC,
+    Circuit_Wafer_ZPIC,
+    Circuit_Chip_ZPIC,
+    Circuit_Wafer_YPIC,
+    Circuit_Chip_YPIC,
+    Circuit_Wafer_PlPIC,
+    Circuit_Chip_PlPIC,
 
     Circuit_Chip_CrystalCPU,
     Circuit_Chip_CrystalSoC,
@@ -2006,6 +2053,9 @@ public enum ItemList implements IItemContainer {
     Spinneret,
     GalliumArsenideCrystal,
     GalliumArsenideCrystalSmallPart,
+
+    Circuit_BasicElectronic,
+    Circuit_Integrated_Advanced,
 
     Circuit_Microprocessor,
     Circuit_Processor,
@@ -2067,6 +2117,7 @@ public enum ItemList implements IItemContainer {
     Machine_HV_LightningRod,
     Machine_EV_LightningRod,
 
+    Machine_ULV_SolarPanel,
     Machine_LV_SolarPanel,
     Machine_MV_SolarPanel,
     Machine_HV_SolarPanel,
@@ -2086,6 +2137,11 @@ public enum ItemList implements IItemContainer {
     ZPM_Coil,
     UV_Coil,
     UHV_Coil,
+    UEV_Coil,
+    UIV_Coil,
+    UMV_Coil,
+    UXV_Coil,
+    MAX_Coil,
 
     Circuit_Parts_ResistorXSMD,
     Circuit_Parts_DiodeXSMD,
@@ -2105,8 +2161,12 @@ public enum ItemList implements IItemContainer {
     Hatch_CraftingInput_Bus_ME,
     Hatch_CraftingInput_Bus_ME_ItemOnly,
     Hatch_CraftingInput_Bus_Slave,
-    Hatch_PatternProvider_Crafting,
-    AdvDebugStructureWriter,
+    Hatch_PatternProvider_Crafting_IV,
+    Hatch_PatternProvider_Crafting_LuV,
+    Hatch_PatternProvider_Crafting_ZPM,
+    Hatch_PatternProvider_Crafting_UV,
+    Hatch_PatternProvider_Crafting_UHV,
+    DebugStructureWriter,
 
     Superconducting_Magnet_Solenoid_MV,
     Superconducting_Magnet_Solenoid_HV,
@@ -2130,7 +2190,6 @@ public enum ItemList implements IItemContainer {
     Machine_Multi_TranscendentPlasmaMixer,
     Cover_Metrics_Transmitter,
     NC_AdvancedSensorCard,
-    Machine_Multi_DroneCentre,
     TierdDrone0,
     TierdDrone1,
     TierdDrone2,
@@ -2149,6 +2208,18 @@ public enum ItemList implements IItemContainer {
     GlassTintedIndustrialLightGray,
     GlassTintedIndustrialGray,
     GlassTintedIndustrialBlack,
+    GlassTintedIndustrialBrown,
+    GlassTintedIndustrialRed,
+    GlassTintedIndustrialOrange,
+    GlassTintedIndustrialYellow,
+    GlassTintedIndustrialLime,
+    GlassTintedIndustrialGreen,
+    GlassTintedIndustrialCyan,
+    GlassTintedIndustrialLightBlue,
+    GlassTintedIndustrialBlue,
+    GlassTintedIndustrialPurple,
+    GlassTintedIndustrialMagenta,
+    GlassTintedIndustrialPink,
     BlockIndustrialWaterPlantCasing,
     BlockSterileWaterPlantCasing,
     BlockFlocculationCasing,
@@ -2177,6 +2248,18 @@ public enum ItemList implements IItemContainer {
     CasingThaumium,
     CasingVoid,
     CasingIchorium,
+    CasingMixer,
+    FormingCore,
+    TensionResistantMachineCasing,
+    ExtruderMachineCasing,
+    CasingHearth,
+    CasingFridge,
+    CasingNaquadahReinforcedDistillation,
+    CasingPlasmaCollider,
+    CasingQuadcellDriving,
+    GlassPlasmaCollider,
+    AlgaeCasing,
+    NaquadahReactorCasing,
     EntropicProcessor,
     DecayWarehouse,
     LATEX,
@@ -2242,16 +2325,6 @@ public enum ItemList implements IItemContainer {
     Battery_Buffer_4by4_UMV,
     Battery_Buffer_4by4_UXV,
     Battery_Buffer_4by4_MAXV,
-    Hull_UEV,
-    Hull_UIV,
-    Hull_UMV,
-    Hull_UXV,
-    Hull_MAXV,
-    Casing_UEV,
-    Casing_UIV,
-    Casing_UMV,
-    Casing_UXV,
-    Casing_MAXV,
     //
     Transformer_UEV_UHV,
     Transformer_UIV_UEV,
@@ -2636,6 +2709,7 @@ public enum ItemList implements IItemContainer {
     Casing_Pyrolyse,
     NameRemover,
     Hatch_Nanite,
+    Hatch_Nanite_Singularity,
     Hatch_Catalyst_Bulk,
     Machine_Multi_AirFilterT1,
     Machine_Multi_AirFilterT2,
@@ -2651,9 +2725,12 @@ public enum ItemList implements IItemContainer {
     Alumina_Support_Ring,
     Alumina_Support_Ring_Raw,
     Prismarine_Precipitate,
+    Dim_Prismarine,
     Prismatic_Crystal,
     Radiation_Proof_Prismatic_Naquadah_Composite_Sheet,
     Naquarite_Universal_Insulator_Foil,
+
+    Machine_Multi_Large_Neutralization_Engine,
 
     SpaceElevatorController,
     SpaceElevatorModuleAssemblerT1,
@@ -2709,6 +2786,10 @@ public enum ItemList implements IItemContainer {
     UHTResistantMesh,
     TaHfNanoparticles,
     NtNanoparticles,
+    DroneCase,
+    Femtocontroller,
+    FuelPellet,
+    SolarSail,
 
     PrecisionFieldSyncCasing,
     MagneticAnchorCasing,
@@ -2717,10 +2798,28 @@ public enum ItemList implements IItemContainer {
     NaniteFramework,
     NaniteShieldingGlass,
 
-    PlanetaryGasSiphonController,
     PlanetaryGasSiphonCasing,
 
     MagLevHarness,
+
+    LargeHadronCollider,
+    ColliderCasing,
+    CMSCasing,
+    ATLASCasing,
+    ALICECasing,
+    LHCbCasing,
+    AdvancedBeamlineOutputHatch,
+
+    BeamCrafter,
+    BeamMirror,
+    BeamSplitter,
+    BeamStabilizer,
+
+    StableBaryonContainmentUnit,
+    StableLeptonContainmentUnit,
+    StableMesonContainmentUnit,
+    StableBosonContainmentUnit,
+    StableEmptyContainmentUnit,
 
     ManaFly,
     DebugEnergyHatch,
@@ -2730,6 +2829,58 @@ public enum ItemList implements IItemContainer {
     CokeOvenController,
     CokeOvenCasing,
     CokeOvenHatch,
+
+    Mechanical_Helmet,
+    Mechanical_Chestplate,
+    Mechanical_Leggings,
+    Mechanical_Boots,
+    ModificationTable,
+
+    Armor_Core_T1,
+    Armor_Core_T2,
+    Armor_Core_T3,
+    Armor_Core_T4,
+
+    Armor_Chip_T1,
+    Armor_Frame_Light,
+    Armor_Frame_Medium,
+    Armor_Frame_Heavy,
+    Armor_Chip_T2,
+    Armor_Frame_Nimble,
+    Armor_Frame_Adaptive,
+    Armor_Frame_Tough,
+    Armor_Chip_T3,
+    Armor_Frame_Lightning,
+    Armor_Frame_Morphic,
+    Armor_Frame_Bulwark,
+    Armor_Frame_Infinity,
+
+    Augment_NightVision,
+    Augment_CreativeFlight,
+    Augment_Jetpack,
+    Augment_VectoredJetpack,
+    Augment_FireImmunity,
+    Augment_StepAssist,
+    Augment_GogglesOfRevealing,
+    Augment_InertiaCanceling,
+    Augment_EldritchStriders,
+    Augment_OmniMovement,
+    Augment_ArchmageStriders,
+    Augment_Hazmat,
+    Augment_Apiarist,
+    Augment_SwimSpeed,
+    Augment_ApprenticeStriders,
+    Augment_KnockbackResistance,
+    Augment_SpeedBoost,
+    Augment_JumpBoost,
+    Augment_FallProtection,
+    Augment_SpaceSuit,
+    Augment_ForceField,
+    Augment_WaterBreathing,
+    Augment_MilkInfusion,
+    Augment_HoloInventory,
+    Augment_Terrasteel,
+    Augment_Soulbound,
 
     CompressedOutputBusLuV,
     CompressedOutputBusZPM,
@@ -2754,7 +2905,8 @@ public enum ItemList implements IItemContainer {
     IndustrialCentrifuge,
     IndustrialElectrolyzer,
     MegaDistillationTower,
-    MegaBlastFurnace,
+    EndothermicFridge,
+    ExothermicHearth,
     MegaVacuumFreezer,
     SteamTurbineXL,
     HPSteamTurbineXL,
@@ -2777,7 +2929,7 @@ public enum ItemList implements IItemContainer {
     LargeNaquadahReactor,
     LargeThermalRefinery,
     MacerationStack,
-    CuttingMachine,
+    IndustrialCuttingMachine,
     TreeGrowSimulator,
     LargeSifter,
     IndustrialCokeOven,
@@ -2787,12 +2939,13 @@ public enum ItemList implements IItemContainer {
     AdvancedImplosionCompressor,
     IndustrialArcFurnace,
     IndustrialExtruder,
-    IndustrialWasher,
+    OreWashingPlant,
     IndustrialChemicalBath,
-    IndustrialMaterialPress,
+    IndustrialFormingPress,
     IndustrialBendingMachine,
     IndustrialPrinter,
     IndustrialForgeHammer,
+    DroneCentre,
     Boldarnator,
     ThermalBoiler,
     MolecularTransformer,
@@ -2803,8 +2956,10 @@ public enum ItemList implements IItemContainer {
     ElectricImplosionCompressor,
     IntegratedOreFactory,
     CryogenicFreezer,
-
+    IndustrialMixer,
     MegaChemicalReactor,
+    InfiniteFluidDrillingRig,
+    MegaOilCracker,
 
     BasicCircuitBoard,
     EnhancedCircuitBoard,
@@ -2961,12 +3116,226 @@ public enum ItemList implements IItemContainer {
     Wrap_OpticallyCompatibleMemories,
     Wrap_LivingCrystalChips,
     Wrap_LivingBioChips,
+    ToolBox,
     MeshInterfaceNanochipCasing,
     ReinforcementNanochipCasing,
     ComputationalMatrixNanochipCasing,
     FirewallProjectionNanochipCasing,
     ComplexNanochipGlass,
+    Gravitational_Lens,
 
+    CalabiYauManifold,
+    RawManifoldBud,
+    BlossomingManifoldBud,
+
+    PulsatingWDMStrands,
+    UnboundWDMStrands,
+    MacrocosmicStrands,
+    IsolatedBDMStrands,
+
+    LostQuantumCircuitRack,
+    RealizedQuantumCircuitRack,
+
+    CultureNullBioCulture,
+    CultureSaccharomycesCerevisiae,
+    CultureSaccharomycesCerevisiaeVarBayanus,
+    CultureSaccharomycesCerevisiaeVarCerevisiae,
+    CultureEscherichiaCadaver,
+    CultureEscherichiaKoli,
+    CulturePseudomonasVeronii,
+    CultureSaccharomycesEscherichia,
+    CultureBarnadafisArboriatoris,
+    CultureTcetieisFucusSerratus,
+    CultureXenoxeneXenoxsis,
+    CultureOvaEvolutionis,
+    CultureDerivanturCellulaEvolutionis,
+    CultureCellulaBiologicumEvolutione,
+    CultureBinniGrowthMedium,
+    CultureBinniBacteria,
+    CultureCorynebacteriumSludgeMarsensis,
+    CultureMutagenBacteriaASpatio,
+
+    DNABetaLactamase,
+    DNASaccharomycesCerevisiae,
+    DNANull,
+    DNASaccharomycesCerevisiaeVarBayanus,
+    DNASaccharomycesCerevisiaeVarCerevisiae,
+    DNAEscherichiaKoli,
+    DNAPseudomonasVeronii,
+    DNAPseudomonasVeronii2,
+    DNABarnadafisArboriatoris,
+    DNATcetieisFucusSerratus,
+    DNAOvumbac,
+    DNAStemcellbac,
+    DNABiocellbac,
+    DNABinnigrowthmedium,
+    DNABinnibacteria,
+    DNABacterialsludgebac,
+    DNAMutagen,
+
+    PlasmidBetaLactamase,
+    PlasmidSaccharomycesCerevisiae,
+    PlasmidNull,
+    PlasmidSaccharomycesCerevisiaeVarBayanus,
+    PlasmidSaccharomycesCerevisiaeVarCerevisiae,
+    PlasmidEscherichiaKoli,
+    PlasmidPseudomonasVeronii,
+    PlasmidPseudomonasVeronii2,
+    PlasmidBarnadafisArboriatoris,
+    PlasmidTcetieisFucusSerratus,
+    PlasmidOvumbac,
+    PlasmidStemcellbac,
+    PlasmidBiocellbac,
+    PlasmidBinnigrowthmedium,
+    PlasmidBinnibacteria,
+    PlasmidBacterialsludgebac,
+    PlasmidMutagen,
+
+    EmptyPetriDish,
+    EmptyPlasmid,
+    EmptyDNAFlask,
+    DetergentPowder,
+    Agarose,
+    IncubationModule,
+    PlasmaMembrane,
+    MetaMaterial_Shielding1,
+    MetaMaterial_Shielding2,
+    MetaMaterial_Shielding3,
+    MetaMaterial_Waveguide1,
+    MetaMaterial_Waveguide2,
+    MetaMaterial_Waveguide3,
+    MetaMaterial_EnergyConduit1,
+    MetaMaterial_EnergyConduit2,
+    MetaMaterial_EnergyConduit3,
+    MetaMaterial_ElectrograviticValve1,
+    MetaMaterial_ElectrograviticValve2,
+    MetaMaterial_ElectrograviticValve3,
+    MetaMaterial_WaveFocus1,
+    MetaMaterial_WaveFocus2,
+    MetaMaterial_WaveFocus3,
+    MetaMaterial_WaveFocus4,
+    MetaMaterial_ResonanceChamber1,
+    MetaMaterial_ResonanceChamber2,
+    MetaMaterial_ResonanceChamber3,
+    MetaMaterial_ResonanceChamber4,
+    MetaMaterial_SensorArray1,
+    MetaMaterial_SensorArray2,
+    MetaMaterial_SensorArray3,
+    MetaMaterial_SensorArray4,
+    MetaMaterial_FieldManipulator1,
+    MetaMaterial_FieldManipulator2,
+    MetaMaterial_FieldManipulator3,
+    MetaMaterial_FieldManipulator4,
+
+    Ice_Cream_Machine,
+    Ice_Cream_Random,
+    Ice_Cream_Acid,
+    Ice_Cream_Banana,
+    Ice_Cream_BananaSplit,
+    Ice_Cream_Benzene,
+    Ice_Cream_BlueberryBlastStargate,
+    Ice_Cream_Blueberry,
+    Ice_Cream_Boucream,
+    Ice_Cream_BowlOfHarmony,
+    Ice_Cream_Brownie,
+    Ice_Cream_ButterPecan,
+    Ice_Cream_Butterscotch,
+    Ice_Cream_Caramel,
+    Ice_Cream_CherryParfait,
+    Ice_Cream_ChocoVanilla,
+    Ice_Cream_ChocolateChip,
+    Ice_Cream_Chocolate,
+    Ice_Cream_Sandwich_Chocolate,
+    Ice_Cream_Popsicle_Chocolate,
+    Ice_Cream_ChocolateWalnutFudge,
+    Ice_Cream_Coffee,
+    Ice_Cream_CookieDough,
+    Ice_Cream_CookiesAndCream,
+    Ice_Cream_CottonCandy,
+    Ice_Cream_Popsicle_Double,
+    Ice_Cream_ElectronicBlast,
+    Ice_Cream_Engineers,
+    Ice_Cream_FrenchVanilla,
+    Ice_Cream_Popsicle_Fruit,
+    Ice_Cream_GrapeMatterManipulator,
+    Ice_Cream_HotFudge,
+    Ice_Cream_Sandwich,
+    Ice_Cream_JustCone,
+    Ice_Cream_Lemonade,
+    Ice_Cream_MHDCSM,
+    Ice_Cream_Mango,
+    Ice_Cream_Meat,
+    Ice_Cream_MintChip,
+    Ice_Cream_Neapolitan,
+    Ice_Cream_NoFlavor,
+    Ice_Cream_Peach,
+    Ice_Cream_PeanutButter,
+    Ice_Cream_Pistachio,
+    Ice_Cream_Radioactive,
+    Ice_Cream_Sorbet_RainbowStellar,
+    Ice_Cream_Sorbet_Raspberry,
+    Ice_Cream_SaltedCaramel,
+    Ice_Cream_Spaghetti,
+    Ice_Cream_Sprinkles,
+    Ice_Cream_Strawberry,
+    Ice_Cream_ToffeeButter,
+    Ice_Cream_Unicorn,
+    Ice_Cream_Vanilla,
+    Ice_Cream_Concrete,
+    Ice_Cream_Rubber,
+    Ice_Cream_Diesel,
+    Ice_Cream_Snowcone,
+    Ice_Cream_IceSlush,
+    Ice_Cream_Sorbet_Pineapple,
+    Ice_Cream_Orange,
+    Ice_Cream_Jelly,
+    Ice_Cream_MatchaSnake,
+    Ice_Cream_Popsicle_Freeze,
+    Ice_Cream_HoneyBeeBowl,
+    Ice_Cream_IlluminatiCone,
+    Ice_Cream_ConfettiQuestbook,
+    Ice_Cream_PitOfDoomAndDespair,
+    Ice_Cream_MasterOfDreams,
+    Ice_Cream_Explosive,
+    Ice_Cream_NotFound404,
+    Ice_Cream_AntimatterAffogato,
+    Ice_Cream_Cheese,
+    Ice_Cream_Chestmonster,
+    Ice_Cream_CircuitBoardCrunch,
+    Ice_Cream_CompileError,
+    Ice_Cream_CrudeOil,
+    Ice_Cream_Popsicle_Diamond,
+    Ice_Cream_GraveDirtAndGummis,
+    Ice_Cream_RubberDucky,
+    Ice_Cream_DuctTape,
+    Ice_Cream_Exotic,
+    Ice_Cream_Popsicle_Grapquada,
+    Ice_Cream_Grind,
+    Ice_Cream_Foolish,
+    Ice_Cream_LawnbaseSpecial,
+    Ice_Cream_LunarLander,
+    Ice_Cream_NaquadahNutSwirl,
+    Ice_Cream_NaquadriaPlasmaParfait,
+    Ice_Cream_NetherStarNutCrunch,
+    Ice_Cream_NutsAndBolts,
+    Ice_Cream_OverclockedEspresso,
+    Ice_Cream_PeachPlasmaParfait,
+    Ice_Cream_Pipegetti,
+    Ice_Cream_Potato,
+    Ice_Cream_Sorbet_Redstone,
+    Ice_Cream_RocketFuelFloat,
+    Ice_Cream_Popsicle_StrawberryYogurt,
+    Ice_Cream_ThaumaturgesDelight,
+    Ice_Cream_ThaumiumTruffle,
+    Ice_Cream_TotallyInnocentRing,
+    Ice_Cream_Transcendent,
+    Ice_Cream_VoidKitty,
+    Ice_Cream_VoidMinersVanilla,
+    Ice_Cream_Warped,
+    Ice_Cream_WitchyWildberry,
+    // Reserved for Ice creams, don't you dare (to 700)
+    Ice_Cream_Trophy,
+    QuadcellPlasmaCollider,
     // semicolon after the comment to reduce merge conflicts
     ;
 
@@ -2981,14 +3350,20 @@ public enum ItemList implements IItemContainer {
             Spray_Color_Used_14, Spray_Color_Used_15 },
         TRANSFORMERS = { Transformer_LV_ULV, Transformer_MV_LV, Transformer_HV_MV, Transformer_EV_HV, Transformer_IV_EV,
             Transformer_LuV_IV, Transformer_ZPM_LuV, Transformer_UV_ZPM, Transformer_MAX_UV },
-        MACHINE_HULLS = { Hull_ULV, Hull_LV, Hull_MV, Hull_HV, Hull_EV, Hull_IV, Hull_LuV, Hull_ZPM, Hull_UV, Hull_MAX,
+        POWER_TRANSFORMERS = { WetTransformer_LV_ULV, WetTransformer_MV_LV, WetTransformer_HV_MV, WetTransformer_EV_HV,
+            WetTransformer_IV_EV, WetTransformer_LuV_IV, WetTransformer_ZPM_LuV, WetTransformer_UV_ZPM,
+            WetTransformer_UHV_UV, WetTransformer_UEV_UHV, WetTransformer_UIV_UEV, WetTransformer_UMV_UIV,
+            WetTransformer_UXV_UMV, WetTransformer_MAX_UXV },
+        MACHINE_HULLS = { Hull_ULV, Hull_LV, Hull_MV, Hull_HV, Hull_EV, Hull_IV, Hull_LuV, Hull_ZPM, Hull_UV, Hull_UHV,
             Hull_UEV, Hull_UIV, Hull_UMV, Hull_UXV, Hull_MAXV },
         MACHINE_CASINGS = { Casing_ULV, Casing_LV, Casing_MV, Casing_HV, Casing_EV, Casing_IV, Casing_LuV, Casing_ZPM,
-            Casing_UV, Casing_MAX, Casing_UEV, Casing_UIV, Casing_UMV, Casing_UXV, Casing_MAXV },
+            Casing_UV, Casing_UHV, Casing_UEV, Casing_UIV, Casing_UMV, Casing_UXV, Casing_MAXV },
         HATCHES_DYNAMO = { Hatch_Dynamo_ULV, Hatch_Dynamo_LV, Hatch_Dynamo_MV, Hatch_Dynamo_HV, Hatch_Dynamo_EV,
-            Hatch_Dynamo_IV, Hatch_Dynamo_LuV, Hatch_Dynamo_ZPM, Hatch_Dynamo_UV, Hatch_Dynamo_UHV },
+            Hatch_Dynamo_IV, Hatch_Dynamo_LuV, Hatch_Dynamo_ZPM, Hatch_Dynamo_UV, Hatch_Dynamo_UHV, Hatch_Dynamo_UEV,
+            Hatch_Dynamo_UIV, Hatch_Dynamo_UMV, Hatch_Dynamo_UXV },
         HATCHES_ENERGY = { Hatch_Energy_ULV, Hatch_Energy_LV, Hatch_Energy_MV, Hatch_Energy_HV, Hatch_Energy_EV,
-            Hatch_Energy_IV, Hatch_Energy_LuV, Hatch_Energy_ZPM, Hatch_Energy_UV, Hatch_Energy_UHV },
+            Hatch_Energy_IV, Hatch_Energy_LuV, Hatch_Energy_ZPM, Hatch_Energy_UV, Hatch_Energy_UHV, Hatch_Energy_UEV,
+            Hatch_Energy_UIV, Hatch_Energy_UMV, Hatch_Energy_UXV },
         HATCHES_INPUT = { Hatch_Input_ULV, Hatch_Input_LV, Hatch_Input_MV, Hatch_Input_HV, Hatch_Input_EV,
             Hatch_Input_IV, Hatch_Input_LuV, Hatch_Input_ZPM, Hatch_Input_UV, Hatch_Input_UHV },
         HATCHES_INPUT_BUS = { Hatch_Input_Bus_ULV, Hatch_Input_Bus_LV, Hatch_Input_Bus_MV, Hatch_Input_Bus_HV,
@@ -3009,10 +3384,21 @@ public enum ItemList implements IItemContainer {
         WIRELESS_ENERGY_COVERS = { Cover_Wireless_Energy_LV, Cover_Wireless_Energy_MV, Cover_Wireless_Energy_HV,
             Cover_Wireless_Energy_EV, Cover_Wireless_Energy_IV, Cover_Wireless_Energy_LuV, Cover_Wireless_Energy_ZPM,
             Cover_Wireless_Energy_UV, Cover_Wireless_Energy_UHV, Cover_Wireless_Energy_UEV, Cover_Wireless_Energy_UIV,
-            Cover_Wireless_Energy_UMV, Cover_Wireless_Energy_UXV, Cover_Wireless_Energy_MAX };
+            Cover_Wireless_Energy_UMV, Cover_Wireless_Energy_UXV, Cover_Wireless_Energy_MAX },
+        ROBOT_ARMS = { Robot_Arm_LV, Robot_Arm_MV, Robot_Arm_HV, Robot_Arm_EV, Robot_Arm_IV, Robot_Arm_LuV,
+            Robot_Arm_ZPM, Robot_Arm_UV, Robot_Arm_UHV, Robot_Arm_UEV, Robot_Arm_UIV, Robot_Arm_UMV, Robot_Arm_UXV,
+            Robot_Arm_MAX };
+
     public static Fluid sOilExtraHeavy, sEpichlorhydrin, sDrillingFluid, sBlueVitriol, sNickelSulfate, sGreenVitriol,
         sToluene, sNitrationMixture, sRocketFuel, sHydricSulfur, sIndiumConcentrate, sLeadZincSolution,
         sHydrochloricAcid;
+    public static final List<ItemList> FORESTRY_DECORATIVE_PLANKS = ImmutableList.copyOf(
+        new ItemList[] { ItemList.Plank_Larch, ItemList.Plank_Teak, ItemList.Plank_Acacia_Green, ItemList.Plank_Lime,
+            ItemList.Plank_Chestnut, ItemList.Plank_Wenge, ItemList.Plank_Baobab, ItemList.Plank_Sequoia,
+            ItemList.Plank_Kapok, ItemList.Plank_Ebony, ItemList.Plank_Mahagony, ItemList.Plank_Balsa,
+            ItemList.Plank_Willow, ItemList.Plank_Walnut, ItemList.Plank_Greenheart, ItemList.Plank_Cherry,
+            ItemList.Plank_Mahoe, ItemList.Plank_Poplar, ItemList.Plank_Palm, ItemList.Plank_Papaya,
+            ItemList.Plank_Pine, ItemList.Plank_Plum, ItemList.Plank_Maple, ItemList.Plank_Citrus });
     private ItemStack mStack;
     private boolean mHasNotBeenSet;
     private boolean mDeprecated;
@@ -3077,7 +3463,7 @@ public enum ItemList implements IItemContainer {
     @Override
     public boolean isStackEqual(Object aStack, boolean aWildcard, boolean aIgnoreNBT) {
         if (mDeprecated && !mWarned) {
-            new Exception(this + " is now deprecated").printStackTrace(GTLog.err);
+            GT_FML_LOGGER.error(new Exception(this + " is now deprecated"));
             // warn only once
             mWarned = true;
         }
@@ -3089,8 +3475,8 @@ public enum ItemList implements IItemContainer {
     public ItemStack get(long aAmount, Object... aReplacements) {
         sanityCheck();
         if (GTUtility.isStackInvalid(mStack)) {
-            GTLog.out.println("Object in the ItemList is null at:");
-            new NullPointerException().printStackTrace(GTLog.out);
+            GT_FML_LOGGER.debug("Object in the ItemList is null at:");
+            GT_FML_LOGGER.debug(new NullPointerException());
             return GTUtility.copyAmount(aAmount, aReplacements);
         }
         return GTUtility.copyAmount(aAmount, GTOreDictUnificator.get(mStack));
@@ -3133,15 +3519,15 @@ public enum ItemList implements IItemContainer {
                 tWord.substring(1)
                     .toLowerCase(Locale.US));
         }
-        if (tCamelCasedDisplayNameBuilder.length() == 0) {
+        if (tCamelCasedDisplayNameBuilder.isEmpty()) {
             // CamelCased DisplayName is empty, so use hash of aDisplayName
             tCamelCasedDisplayNameBuilder.append(((Long) (long) aDisplayName.hashCode()));
         }
 
         // Construct a translation key from UnlocalizedName and CamelCased DisplayName
         final String tKey = rStack.getUnlocalizedName() + ".with." + tCamelCasedDisplayNameBuilder + ".name";
-
-        rStack.setStackDisplayName(GTLanguageManager.addStringLocalization(tKey, aDisplayName));
+        GTLanguageManager.addStringLocalization(tKey, aDisplayName);
+        rStack.setStackDisplayName(StatCollector.translateToLocal(tKey));
         return GTUtility.copyAmount(aAmount, rStack);
     }
 
@@ -3194,7 +3580,7 @@ public enum ItemList implements IItemContainer {
         if (mHasNotBeenSet)
             throw new IllegalAccessError("The Enum '" + name() + "' has not been set to an Item at this time!");
         if (mDeprecated && !mWarned) {
-            new Exception(this + " is now deprecated").printStackTrace(GTLog.err);
+            GT_FML_LOGGER.error(new Exception(this + " is now deprecated"));
             // warn only once
             mWarned = true;
         }

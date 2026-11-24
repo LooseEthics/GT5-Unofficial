@@ -40,7 +40,9 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.IChatComponent;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
@@ -52,6 +54,7 @@ import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.items.BlockLongDistancePipe;
 import gregtech.api.metatileentity.BaseMetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEBasicHullNonElectric;
+import gregtech.api.util.GTSplit;
 import gregtech.api.util.GTUtility;
 import mcp.mobius.waila.api.IWailaConfigHandler;
 import mcp.mobius.waila.api.IWailaDataAccessor;
@@ -70,9 +73,10 @@ public abstract class MTELongDistancePipelineBase extends MTEBasicHullNonElectri
     protected volatile MTELongDistancePipelineBase mSender = null;
     protected volatile ChunkCoordinates mTargetPos = null;
     protected MTELongDistancePipelineBase mTooCloseTarget = null, mTooCloseSender = null;
+    protected String tooltipPrefixKey;
 
-    public MTELongDistancePipelineBase(int aID, String aName, String aNameRegional, int aTier, String aDescription) {
-        super(aID, aName, aNameRegional, aTier, aDescription);
+    public MTELongDistancePipelineBase(int aID, String aName, String aNameRegional, int aTier) {
+        super(aID, aName, aNameRegional, aTier);
     }
 
     public MTELongDistancePipelineBase(String aName, int aTier, String[] aDescription, ITexture[][][] aTextures) {
@@ -81,9 +85,11 @@ public abstract class MTELongDistancePipelineBase extends MTEBasicHullNonElectri
 
     @Override
     public String[] getDescription() {
-        return new String[] { "Only one Input and Output are allowed per pipeline",
-            "Only Input and Output have to be chunkloaded", "Transfer rate is solely limited by input rate",
-            "Minimum distance: " + minimalDistancePoints + " blocks" };
+        if (tooltipPrefixKey != null) return GTSplit.splitLocalizedFormattedWithPrefix(
+            "gt.blockmachines.long_distance_pipeline.desc",
+            StatCollector.translateToLocal(tooltipPrefixKey),
+            minimalDistancePoints);
+        return GTSplit.splitLocalizedFormatted("gt.blockmachines.long_distance_pipeline.desc", minimalDistancePoints);
     }
 
     @Override
@@ -172,26 +178,30 @@ public abstract class MTELongDistancePipelineBase extends MTEBasicHullNonElectri
     }
 
     @Override
-    public ArrayList<String> getSpecialDebugInfo(IGregTechTileEntity aBaseMetaTileEntity, EntityPlayer aPlayer,
-        int aLogLevel, ArrayList<String> aList) {
+    public void addSpecialDebugInfoComp(IGregTechTileEntity baseMetaTileEntity, EntityPlayer player, int logLevel,
+        ArrayList<IChatComponent> components) {
         if (mSender != null && !mSender.isDead() && mSender.mTarget == this) {
             final ChunkCoordinates coords = mSender.getCoords();
-            aList.addAll(
+            components.addAll(
                 Arrays.asList(
-                    "Is Pipeline Output",
-                    "Pipeline Input is at: X: " + coords.posX + " Y: " + coords.posY + " Z: " + coords.posZ));
+                    new ChatComponentTranslation("GT5U.scanner.debug.long_distance_pipeline.output"),
+                    new ChatComponentTranslation(
+                        "GT5U.scanner.debug.long_distance_pipeline.input_at",
+                        coords.posX,
+                        coords.posY,
+                        coords.posZ)));
         } else {
-            aList.addAll(
+            components.addAll(
                 Arrays.asList(
-                    checkTarget() ? "Is connected to Pipeline Output" : "Pipeline Output is not connected/chunkloaded",
-                    "Pipeline Output should be around: X: " + mTargetPos.posX
-                        + " Y: "
-                        + mTargetPos.posY
-                        + " Z: "
-                        + mTargetPos.posZ));
+                    new ChatComponentTranslation(
+                        checkTarget() ? "GT5U.scanner.debug.long_distance_pipeline.connected"
+                            : "GT5U.scanner.debug.long_distance_pipeline.not_connected"),
+                    new ChatComponentTranslation(
+                        "GT5U.scanner.debug.long_distance_pipeline.output_at",
+                        mTargetPos.posX,
+                        mTargetPos.posY,
+                        mTargetPos.posZ)));
         }
-
-        return aList;
     }
 
     // What meta should the pipes for this pipeline have

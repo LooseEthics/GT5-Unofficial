@@ -19,9 +19,10 @@ import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import gregtech.api.enums.Mods;
 import gregtech.api.enums.Textures;
+import gregtech.api.interfaces.IIconContainer;
 import gregtech.api.interfaces.ITexture;
-import gregtech.api.interfaces.modularui.IAddUIWidgets;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatch;
@@ -30,16 +31,15 @@ import gregtech.common.gui.modularui.hatch.MTEHatchCapacitorGui;
 import tectech.Reference;
 import tectech.TecTech;
 import tectech.loader.ConfigHandler;
-import tectech.util.CommonValues;
 import tectech.util.TTUtility;
 
 /**
  * Created by Tec on 03.04.2017.
  */
-public class MTEHatchCapacitor extends MTEHatch implements IAddUIWidgets {
+public class MTEHatchCapacitor extends MTEHatch {
 
-    private static Textures.BlockIcons.CustomIcon TM_H;
-    private static Textures.BlockIcons.CustomIcon TM_H_ACTIVE;
+    private static IIconContainer TM_H;
+    private static IIconContainer TM_H_ACTIVE;
     public static final Map<String, MTEHatchCapacitor.CapacitorComponent> componentBinds = new HashMap<>();
 
     public MTEHatchCapacitor(int aID, String aName, String aNameRegional, int aTier) {
@@ -49,7 +49,7 @@ public class MTEHatchCapacitor extends MTEHatch implements IAddUIWidgets {
             aNameRegional,
             aTier,
             16,
-            new String[] { CommonValues.THETA_MOVEMENT, translateToLocal("gt.blockmachines.hatch.capacitor.desc.0"),
+            new String[] { translateToLocal("gt.blockmachines.hatch.capacitor.desc.0"),
                 EnumChatFormatting.AQUA + translateToLocal("gt.blockmachines.hatch.capacitor.desc.1") });
     }
 
@@ -66,8 +66,8 @@ public class MTEHatchCapacitor extends MTEHatch implements IAddUIWidgets {
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister aBlockIconRegister) {
         super.registerIcons(aBlockIconRegister);
-        TM_H_ACTIVE = new Textures.BlockIcons.CustomIcon("iconsets/TM_TESLA_CAPS_ACTIVE");
-        TM_H = new Textures.BlockIcons.CustomIcon("iconsets/TM_TESLA_CAPS");
+        TM_H_ACTIVE = Textures.BlockIcons.custom(Mods.GregTech.resourceDomain, "iconsets/TM_TESLA_CAPS_ACTIVE");
+        TM_H = Textures.BlockIcons.custom(Mods.GregTech.resourceDomain, "iconsets/TM_TESLA_CAPS");
     }
 
     @Override
@@ -192,7 +192,7 @@ public class MTEHatchCapacitor extends MTEHatch implements IAddUIWidgets {
             this.energyMax = energyMax;
             componentBinds.put(unlocalizedName, this);
             if (ConfigHandler.debug.DEBUG_MODE) {
-                TecTech.LOGGER.info("Tesla Capacitor registered: " + unlocalizedName);
+                TecTech.LOGGER.info("Tesla Capacitor registered: {}", unlocalizedName);
             }
         }
 
@@ -208,5 +208,11 @@ public class MTEHatchCapacitor extends MTEHatch implements IAddUIWidgets {
             }
             return false;
         }
+    }
+
+    @Override
+    public boolean isItemValidForSlot(int index, ItemStack itemStack) {
+        return itemStack != null && componentBinds.containsKey(TTUtility.getUniqueIdentifier(itemStack))
+            && super.isItemValidForSlot(index, itemStack);
     }
 }

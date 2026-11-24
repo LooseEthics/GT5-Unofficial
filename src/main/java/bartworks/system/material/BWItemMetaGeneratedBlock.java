@@ -21,17 +21,19 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
+import com.gtnewhorizon.gtnhlib.blockstate.registry.BlockPropertyRegistry;
+
 import bartworks.common.items.BWItemBlocks;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.util.GTLanguageManager;
 import gregtech.api.util.GTUtility;
-import gregtech.common.config.Client;
 
 public class BWItemMetaGeneratedBlock extends BWItemBlocks {
 
     public BWItemMetaGeneratedBlock(Block par1) {
         super(par1);
+        BlockPropertyRegistry.registerProperty(this, BWMetaGeneratedBlocks.MATERIAL_ID);
     }
 
     @Override
@@ -41,7 +43,7 @@ public class BWItemMetaGeneratedBlock extends BWItemBlocks {
             int aMetaData = aStack.getItemDamage();
             Werkstoff werkstoff = Werkstoff.werkstoffHashMap.get((short) aMetaData);
             if (werkstoff == null) werkstoff = Werkstoff.default_null_Werkstoff;
-            return metaBlock.blockTypeLocalizedName.replace("%material", werkstoff.getLocalizedName());
+            return metaBlock.prefix.getLocalizedNameForItem(werkstoff.getBridgeMaterial());
         }
         return GTLanguageManager.getTranslation(this.getUnlocalizedName(aStack) + ".name");
     }
@@ -49,38 +51,22 @@ public class BWItemMetaGeneratedBlock extends BWItemBlocks {
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack aStack, EntityPlayer aPlayer, List<String> aList, boolean aF3_H) {
-        if (Client.tooltip.showFormula) {
-            if (!GTUtility.isStackValid(aStack) || aPlayer == null || aStack.getItemDamage() <= 0) {
-                return;
-            }
-            if (aList == null) {
-                aList = new ArrayList<>();
-            }
-            Werkstoff werkstoff = Werkstoff.werkstoffHashMap.get((short) aStack.getItemDamage());
-            if (werkstoff != null) {
-                String tooltip = werkstoff.getLocalizedToolTip();
-                if (!tooltip.isEmpty()) {
-                    aList.add(tooltip);
-                }
-            }
+        if (!GTUtility.isStackValid(aStack) || aPlayer == null || aStack.getItemDamage() <= 0) {
+            return;
+        }
+        if (aList == null) {
+            aList = new ArrayList<>();
+        }
+        Werkstoff werkstoff = Werkstoff.werkstoffHashMap.get((short) aStack.getItemDamage());
+        if (werkstoff != null) {
+            werkstoff.addTooltips(aList);
         }
     }
 
     @Override
     public boolean placeBlockAt(ItemStack aStack, EntityPlayer aPlayer, World aWorld, int aX, int aY, int aZ, int side,
         float hitX, float hitY, float hitZ, int aMeta) {
-        short tDamage = (short) this.getDamage(aStack);
-        if (tDamage > 0) {
-            if (!aWorld.setBlock(aX, aY, aZ, this.field_150939_a, tDamage, 3)) {
-                return false;
-            }
-            TileEntityMetaGeneratedBlock tTileEntity = (TileEntityMetaGeneratedBlock) aWorld.getTileEntity(aX, aY, aZ);
-            tTileEntity.mMetaData = tDamage;
-        } else if (!aWorld.setBlock(aX, aY, aZ, this.field_150939_a, 0, 3)) return false;
-        if (aWorld.getBlock(aX, aY, aZ) == this.field_150939_a) {
-            this.field_150939_a.onBlockPlacedBy(aWorld, aX, aY, aZ, aPlayer, aStack);
-            this.field_150939_a.onPostBlockPlaced(aWorld, aX, aY, aZ, tDamage);
-        }
-        return true;
+        int materialId = Math.max(0, (short) this.getDamage(aStack));
+        return super.placeBlockAt(aStack, aPlayer, aWorld, aX, aY, aZ, side, hitX, hitY, hitZ, materialId);
     }
 }

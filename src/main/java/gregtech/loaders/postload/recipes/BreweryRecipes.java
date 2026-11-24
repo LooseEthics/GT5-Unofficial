@@ -16,9 +16,11 @@ import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
 import gregtech.api.enums.GTValues;
+import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Materials;
 import gregtech.api.enums.OrePrefixes;
 import gregtech.api.enums.TierEU;
+import gregtech.api.objects.OreDictItemStack;
 import gregtech.api.util.GTModHandler;
 import gregtech.api.util.GTOreDictUnificator;
 
@@ -465,23 +467,20 @@ public class BreweryRecipes implements Runnable {
         // ic2 biomass recipes
         {
             GTValues.RA.stdBuilder()
-                .itemInputs(GTModHandler.getIC2Item("biochaff", 1))
+                .itemInputs(ItemList.IC2_BioChaff.get(1))
                 .fluidInputs(Materials.Water.getFluid(1_000))
-                .fluidOutputs(getFluidStack("ic2biomass", 1_000))
+                .fluidOutputs(Materials.Biomass.getFluid(1_000))
                 .duration(8 * SECONDS + 10 * TICKS)
                 .eut(4)
                 .addTo(brewingRecipes);
 
-            // Would add 2 different amount of water input if IC2 isn't loaded
-            if (IndustrialCraft2.isModLoaded()) {
-                GTValues.RA.stdBuilder()
-                    .itemInputs(GTModHandler.getIC2Item("biochaff", 1))
-                    .fluidInputs(GTModHandler.getDistilledWater(500L))
-                    .fluidOutputs(getFluidStack("ic2biomass", 1_000))
-                    .duration(10 * TICKS)
-                    .eut((int) TierEU.RECIPE_LV)
-                    .addTo(brewingRecipes);
-            }
+            GTValues.RA.stdBuilder()
+                .itemInputs(ItemList.IC2_BioChaff.get(1))
+                .fluidInputs(GTModHandler.getDistilledWater(500L))
+                .fluidOutputs(Materials.Biomass.getFluid(1_000))
+                .duration(10 * TICKS)
+                .eut((int) TierEU.RECIPE_LV)
+                .addTo(brewingRecipes);
         }
 
         // potion brewing 2
@@ -496,6 +495,15 @@ public class BreweryRecipes implements Runnable {
             this.addPotionRecipes("speed", GTOreDictUnificator.get(OrePrefixes.dust, Materials.Sugar, 1L));
             this.addPotionRecipes("strength", GTOreDictUnificator.get(OrePrefixes.dust, Materials.Blaze, 1L));
         }
+
+        // From ProcessingCrop - cropLemon brewery
+        GTValues.RA.stdBuilder()
+            .itemInputs(new OreDictItemStack("cropLemon", 1))
+            .fluidInputs(new FluidStack(FluidRegistry.getFluid("potion.vodka"), 750))
+            .fluidOutputs(new FluidStack(FluidRegistry.getFluid("potion.leninade"), 750))
+            .duration(6 * SECONDS + 8 * TICKS)
+            .eut(4)
+            .addTo(brewingRecipes);
     }
 
     public void addPotionRecipes(String aName, ItemStack aItem) {

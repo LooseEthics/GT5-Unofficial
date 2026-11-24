@@ -1,18 +1,37 @@
 package gregtech.api.metatileentity.implementations;
 
+import static com.gtnewhorizon.gtnhlib.util.numberformatting.NumberFormatUtil.formatNumber;
+
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
+
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import appeng.api.crafting.ICraftingIconProvider;
+import gregtech.api.enums.Dyes;
+import gregtech.api.enums.GTValues;
 import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
+import gregtech.api.interfaces.tileentity.ICasingTextureProvider;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.MetaTileEntity;
+import gregtech.api.util.GTSplit;
+import gregtech.api.util.tooltip.TooltipHelper;
+import gregtech.common.tileentities.machines.IHatchWatcher;
+import gregtech.common.tileentities.machines.ISmartInputHatch;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Handles texture changes internally. No special calls are necessary other than updateTexture in add***ToMachineList.
  */
-public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProvider {
+public abstract class MTEHatch extends MTEBasicTank implements ICasingTextureProvider {
 
     public enum ConnectionType {
         CABLE,
@@ -24,6 +43,13 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
     private int textureIndex = 0;
 
     private ItemStack ae2CraftingIcon;
+    private ChunkCoordinates ae2CraftingIconOwner;
+
+    /**
+     * Controllers watching this hatch for new ingredients (see {@link ISmartInputHatch}). When this hatch's contents
+     * change we notify them so they can run an immediate recipe check instead of waiting for their periodic poll.
+     */
+    protected final Set<IHatchWatcher> watchers = new LinkedHashSet<>();
 
     public MTEHatch(int aID, String aName, String aNameRegional, int aTier, int aInvSlotCount, String aDescription,
         ITexture... aTextures) {
@@ -41,6 +67,45 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
 
     public static int getSlots(int aTier) {
         return (aTier + 1) * (aTier + 1);
+    }
+
+    /**
+     * Registers a controller to be notified when this hatch's contents/config change. Hatches that want to push an
+     * immediate recipe check implement {@link ISmartInputHatch}, and the controller registers itself here when the
+     * hatch is added to the structure. A hatch belongs to a multiblock exactly once. The underlying data structure
+     * protects against duplicate watchers.
+     * You should always add watchers via {@link MTEMultiBlockBase#addIfSmartInput(IMetaTileEntity)},
+     * so that the watchers get properly removed from the hatch when needed.
+     * If you don't, manual removal is required!
+     */
+    public void addWatcher(IHatchWatcher watcher) {
+        watchers.add(watcher);
+    }
+
+    public void removeWatcher(IHatchWatcher watcher) {
+        watchers.remove(watcher);
+    }
+
+    /** Asks every registered controller to run a recipe check on its next tick. */
+    protected void notifyWatchers() {
+        for (IHatchWatcher watcher : watchers) {
+            watcher.scheduleRecipeCheckImmediate();
+        }
+    }
+
+    /**
+     * Notifies watchers when this hatch's inventory or tank changed this tick. Relies on
+     * {@link IGregTechTileEntity#hasInventoryBeenModified()}, which every relevant insertion path sets (item slots via
+     * {@code setInventorySlotContents}/{@code decrStackSize}, the GUI/AE handler via
+     * {@link MetaTileEntity#onContentsChanged(int)}, and fluids via {@code fill}). Consuming ingredients also sets the
+     * flag, but that only ever costs a single redundant idle check at the tail of a run. Input hatches/busses should
+     * call this from {@code onPostTick}.
+     */
+    protected void detectInventoryChange() {
+        IGregTechTileEntity base = getBaseMetaTileEntity();
+        if (base != null && base.hasInventoryBeenModified()) {
+            notifyWatchers();
+        }
     }
 
     private int getOffsetTier() {
@@ -69,11 +134,9 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
         int colorIndex, boolean aActive, boolean redstoneLevel) {
 
         try {
-            ITexture background;
+            ITexture background = getCasingTexture();
 
-            if (texturePage > 0 || textureIndex > 0) {
-                background = Textures.BlockIcons.casingTexturePages[texturePage][textureIndex];
-            } else {
+            if (background == null) {
                 background = Textures.BlockIcons.MACHINE_CASINGS[mTier][colorIndex + 1];
             }
 
@@ -89,6 +152,19 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
         } catch (NullPointerException npe) {
             return new ITexture[] { Textures.BlockIcons.MACHINE_CASINGS[0][0] };
         }
+    }
+
+    @Override
+    public ITexture[][] getInventoryTextures() {
+        return getOrCreateInventoryTextures();
+    }
+
+    @Override
+    public ITexture getCasingTexture() {
+        if (texturePage > 0 || textureIndex > 0) {
+            return Textures.BlockIcons.casingTexturePages[texturePage][textureIndex];
+        }
+        return null;
     }
 
     @Override
@@ -118,6 +194,7 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
         if (newTexturePage == texturePage && newTextureIndex == textureIndex) return;
         texturePage = newTexturePage;
         textureIndex = newTextureIndex;
+        clearInventoryTextureCache();
 
         IGregTechTileEntity base = getBaseMetaTileEntity();
 
@@ -129,26 +206,43 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
     }
 
     @Override
-    public NBTTagCompound getDescriptionData() {
-        NBTTagCompound data = new NBTTagCompound();
-
-        data.setInteger("texturePage", texturePage);
-        data.setInteger("textureIndex", textureIndex);
-
-        return data;
+    public void writeToStream(ByteBuf buffer) {
+        super.writeToStream(buffer);
+        buffer.writeInt(texturePage);
+        buffer.writeInt(textureIndex);
     }
 
     @Override
-    public void onDescriptionPacket(NBTTagCompound data) {
-        texturePage = data.getInteger("texturePage");
-        textureIndex = data.getInteger("textureIndex");
+    public void readFromStream(ByteBuf buffer) {
+        super.readFromStream(buffer);
+        texturePage = buffer.readInt();
+        textureIndex = buffer.readInt();
+        clearInventoryTextureCache();
     }
 
     /**
-     * Sets the icon for the owning multiblock used for AE2 crafting display of attached interfaces, called on add to
-     * machine list
+     * @deprecated use {@link #updateCraftingIcon(ItemStack, IGregTechTileEntity)}, this one stays for addons built
+     *             against older GregTech.
      */
+    @Deprecated
     public final void updateCraftingIcon(ItemStack icon) {
+        // The icon gets no owner, so clearHatches never drops it.
+        updateCraftingIcon(icon, null);
+    }
+
+    /**
+     * Sets the icon of the multiblock at {@code owner}, or clears it when {@code icon} is null.
+     */
+    public final void updateCraftingIcon(ItemStack icon, IGregTechTileEntity owner) {
+        final ChunkCoordinates ownerCoords = owner == null ? null : owner.getCoords();
+        if (icon == null) {
+            // A hatch can belong to two multiblocks at once, and the one that set the icon is the only one that
+            // knows whether it is still valid. Anything else leaves it alone.
+            if (ae2CraftingIconOwner == null || !ae2CraftingIconOwner.equals(ownerCoords)) return;
+            this.ae2CraftingIconOwner = null;
+        } else {
+            this.ae2CraftingIconOwner = ownerCoords;
+        }
         this.ae2CraftingIcon = icon;
     }
 
@@ -207,5 +301,44 @@ public abstract class MTEHatch extends MTEBasicTank implements ICraftingIconProv
 
     public int getCircuitSlot() {
         return -1;
+    }
+
+    public static String[] formatEnergyInfoDesc(boolean isDynamo, int tier, int amp, String key, Object... formatted) {
+        return MTEHatch.formatEnergyInfoDesc(null, isDynamo, tier, amp, key, formatted);
+    }
+
+    public static String[] formatEnergyInfoDesc(String suffixTooltip, boolean isDynamo, int tier, int amp, String key,
+        Object... formatted) {
+        final List<String> additionalTooltips = new LinkedList<>();
+        if (suffixTooltip != null) {
+            Collections.addAll(additionalTooltips, suffixTooltip);
+        }
+        additionalTooltips.add(
+            StatCollector.translateToLocalFormatted("gt.tileentity.throughput", formatNumber(amp * GTValues.V[tier])));
+        additionalTooltips.add(
+            StatCollector.translateToLocalFormatted(
+                isDynamo ? "gt.tileentity.eup_out" : "gt.tileentity.eup_in",
+                TooltipHelper.voltageText(GTValues.V[tier])));
+        additionalTooltips
+            .add(StatCollector.translateToLocalFormatted("gt.tileentity.amperage", TooltipHelper.ampText(amp)));
+        final String[] suffixs = additionalTooltips.toArray(new String[0]);
+        if (formatted.length == 0) {
+            return GTSplit.splitLocalizedWithSuffix(key, suffixs);
+        }
+        return GTSplit.splitLocalizedFormattedWithSuffix(key, suffixs, formatted);
+    }
+
+    public static void addColorChannelInfo(List<String> tooltip, byte color) {
+        if (color >= 0 && color < 16) {
+            tooltip.add(
+                StatCollector.translateToLocalFormatted(
+                    "GT5U.waila.hatch.color_channel",
+                    Dyes.VALUES[color].formatting + Dyes.VALUES[color].getLocalizedDyeName()));
+        }
+    }
+
+    @Override
+    protected boolean useMui2() {
+        return false;
     }
 }

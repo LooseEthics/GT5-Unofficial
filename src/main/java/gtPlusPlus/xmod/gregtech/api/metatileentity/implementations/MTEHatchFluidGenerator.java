@@ -2,9 +2,6 @@ package gtPlusPlus.xmod.gregtech.api.metatileentity.implementations;
 
 import static com.gtnewhorizon.gtnhlib.util.numberformatting.NumberFormatUtil.formatNumber;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -19,6 +16,7 @@ import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchInput;
 import gregtech.api.objects.XSTR;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.util.GTSplit;
 import gregtech.api.util.GTUtility;
 
 public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
@@ -45,14 +43,11 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
 
     @Override
     public synchronized String[] getDescription() {
-        return Stream
-            .concat(
-                Stream.of(
-                    mDescriptionArray[0],
-                    "Capacity: " + formatNumber(getCapacity()) + "L",
-                    "Hatch Tier: " + GTUtility.getColoredTierNameFromTier(mTier)),
-                Arrays.stream(getCustomTooltip()))
-            .toArray(String[]::new);
+        return GTSplit.splitLocalizedFormattedWithSuffix(
+            "gt.blockmachines.input_hatch_generator.desc",
+            getCustomTooltip(),
+            formatNumber(getCapacity()),
+            GTUtility.getColoredTierNameFromTier(mTier));
     }
 
     @Override
@@ -66,26 +61,27 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
     }
 
     @Override
-    public boolean isValidSlot(final int aIndex) {
-        return false;
-    }
-
-    @Override
     public abstract MetaTileEntity newMetaEntity(final IGregTechTileEntity aTileEntity);
 
+    @Override
     public boolean allowPullStack(final IGregTechTileEntity aBaseMetaTileEntity, final int aIndex,
         final ForgeDirection side, final ItemStack aStack) {
         return false;
     }
 
+    @Override
     public boolean allowPutStack(final IGregTechTileEntity aBaseMetaTileEntity, final int aIndex,
         final ForgeDirection side, final ItemStack aStack) {
         return false;
     }
 
     @Override
+    public boolean needsClientTick() {
+        return true;
+    }
+
+    @Override
     public void onPostTick(final IGregTechTileEntity aBaseMetaTileEntity, final long aTick) {
-        super.onPostTick(aBaseMetaTileEntity, aTick);
         if (!aBaseMetaTileEntity.isAllowedToWork()) {
             aBaseMetaTileEntity.setActive(false);
             mProgresstime = 0;
@@ -95,11 +91,15 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
             mMaxProgresstime = getMaxTickTime();
             if (++mProgresstime >= mMaxProgresstime) {
                 if (this.canTankBeFilled()) {
-                    addFluidToHatch(aTick);
+                    addFluidToHatch();
                 }
                 mProgresstime = 0;
             }
         }
+        // Generate BEFORE super's detectInventoryChange(): the self-fill marks the tank dirty within this same tick
+        // and the dirty flag is cleared at the end of it, so generating afterwards would never push a recipe check
+        // and a multi idling on the generated fluid (e.g. air) would never wake up.
+        super.onPostTick(aBaseMetaTileEntity, aTick);
     }
 
     @Override
@@ -125,9 +125,9 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
 
     public abstract boolean doesHatchMeetConditionsToGenerate();
 
-    public boolean addFluidToHatch(long aTick) {
+    private void addFluidToHatch() {
         if (!doesHatchMeetConditionsToGenerate()) {
-            return false;
+            return;
         }
         int aFillAmount = this.fill(new FluidStack(getFluidToGenerate(), getAmountOfFluidToGenerate()), true);
         if (aFillAmount > 0) {
@@ -139,7 +139,6 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
                     "cloud");
             }
         }
-        return aFillAmount > 0;
     }
 
     @Override
@@ -186,7 +185,10 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
             }
             return aFluid.amount;
         }
-        if (doFill) getFillableStack().amount = getCapacity();
+        if (doFill && space > 0) {
+            getFillableStack().amount = getCapacity();
+            getBaseMetaTileEntity().markDirty();
+        }
         return space;
     }
 
@@ -212,5 +214,11 @@ public abstract class MTEHatchFluidGenerator extends MTEHatchInput {
         mProgresstime = aNBT.getInteger("mProgresstime");
         mMaxProgresstime = aNBT.getInteger("mMaxProgresstime");
         super.loadNBTData(aNBT);
+    }
+
+    @Override
+    public boolean isFluidInputAllowed(FluidStack aFluid) {
+        return aFluid.getFluid()
+            .equals(getFluidToGenerate());
     }
 }

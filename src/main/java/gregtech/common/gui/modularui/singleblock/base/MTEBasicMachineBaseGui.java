@@ -1,215 +1,505 @@
 package gregtech.common.gui.modularui.singleblock.base;
 
+import static gregtech.api.metatileentity.BaseTileEntity.BUTTON_FORBIDDEN_TOOLTIP;
 import static gregtech.api.metatileentity.BaseTileEntity.TOOLTIP_DELAY;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import net.minecraft.util.StatCollector;
+import net.minecraftforge.common.util.ForgeDirection;
+
+import org.jetbrains.annotations.NotNull;
+
+import com.cleanroommc.modularui.api.IPanelHandler;
 import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.drawable.UITexture;
-import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
-import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.utils.Alignment;
 import com.cleanroommc.modularui.value.sync.BooleanSyncValue;
+import com.cleanroommc.modularui.value.sync.DoubleSyncValue;
+import com.cleanroommc.modularui.value.sync.FluidSlotSyncHandler;
+import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 import com.cleanroommc.modularui.widget.ParentWidget;
 import com.cleanroommc.modularui.widget.Widget;
-import com.cleanroommc.modularui.widgets.SlotGroupWidget;
+import com.cleanroommc.modularui.widgets.ButtonWidget;
+import com.cleanroommc.modularui.widgets.ProgressWidget;
 import com.cleanroommc.modularui.widgets.ToggleButton;
 import com.cleanroommc.modularui.widgets.layout.Flow;
-import com.cleanroommc.modularui.widgets.layout.Row;
+import com.cleanroommc.modularui.widgets.layout.Grid;
+import com.cleanroommc.modularui.widgets.slot.FluidSlot;
+import com.cleanroommc.modularui.widgets.slot.ItemSlot;
+import com.gtnewhorizons.modularui.api.widget.Interactable;
 
-import gregtech.api.gui.widgets.CommonWidgets;
+import gregtech.api.enums.TieredVariant;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.metatileentity.BaseTileEntity;
 import gregtech.api.metatileentity.implementations.MTEBasicMachine;
 import gregtech.api.modularui2.GTGuiTextures;
-import gregtech.common.modularui2.factory.GTBaseGuiBuilder;
+import gregtech.api.modularui2.GTWidgetThemes;
+import gregtech.api.recipe.BasicUIProperties;
+import gregtech.api.util.GTTooltipDataCache;
+import gregtech.api.util.GTUtility;
+import gregtech.common.gui.modularui.util.MachineModularSlot;
+import gregtech.common.modularui2.widget.GTProgressWidget;
+import it.unimi.dsi.fastutil.chars.CharList;
+import tectech.thing.metaTileEntity.pipe.MTEPipeData;
+import tectech.thing.metaTileEntity.pipe.MTEPipeLaser;
 
-public class MTEBasicMachineBaseGui<T extends MTEBasicMachine> {
+public class MTEBasicMachineBaseGui<T extends MTEBasicMachine> extends MTETieredMachineBlockBaseGui<T> {
 
-    protected final T machine;
-    protected final IGregTechTileEntity baseMetaTileEntity;
+    protected final BasicUIProperties properties;
+    protected final BasicUIProperties.SlotOverlayGetter<IDrawable> slotOverlayFunction;
+    protected final UITexture progressBarTexture;
+    protected boolean mAddGregTechLogo = false;
 
-    public MTEBasicMachineBaseGui(T machine) {
-        this.machine = machine;
-        this.baseMetaTileEntity = machine.getBaseMetaTileEntity();
+    protected final Map<BooleanSyncValue, Supplier<GTTooltipDataCache.TooltipData>> errorMap = new HashMap<>();
+
+    public MTEBasicMachineBaseGui(T machine, BasicUIProperties properties) {
+        super(machine);
+        this.properties = properties;
+
+        TieredVariant tieredVariant = machine.getTieredVariant();
+        this.slotOverlayFunction = tieredVariant == TieredVariant.STANDARD ? properties.slotOverlaysMUI2
+            : (index, isFluid, isOutput, isSpecial) -> properties.slotOverlaysSteamMUI2
+                .apply(index, isFluid, isOutput, isSpecial)
+                .get(tieredVariant);
+        this.progressBarTexture = tieredVariant == TieredVariant.STANDARD ? properties.progressBarMUI2
+            : properties.progressBarTextureSteamMUI2.get(tieredVariant);
     }
 
-    private final int borderRadius = 4;
-    private final int buttonSize = 18;
+    public MTEBasicMachineBaseGui<T> useGregTechLogo(boolean addLogo) {
+        this.mAddGregTechLogo = addLogo;
+        return this;
+    }
 
-    public ModularPanel build(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
-        registerSyncValues(syncManager);
+    @Override
+    protected void registerSyncValues(PanelSyncManager syncManager) {
+        super.registerSyncValues(syncManager);
+        BooleanSyncValue itemSync = new BooleanSyncValue(
+            () -> machine.mItemTransfer,
+            value -> machine.mItemTransfer = value).allowC2S();
+        BooleanSyncValue fluidSync = new BooleanSyncValue(
+            () -> machine.mFluidTransfer,
+            value -> machine.mFluidTransfer = value).allowC2S();
+        syncManager.syncValue("itemAutoOutput", itemSync);
+        syncManager.syncValue("fluidAutoOutput", fluidSync);
 
-        ModularPanel panel = this.getBasePanel(guiData, syncManager, uiSettings);
+        syncManager.registerSlotGroup("item_inv", 1 + ((properties.maxItemInputs - 1) / 3));
+
+        initErrors(syncManager);
+    }
+
+    /**
+     * Subclasses can add their own errors to the error map in this method.
+     */
+    protected void initErrors(PanelSyncManager syncManager) {
+        BooleanSyncValue powerfailSyncer = new BooleanSyncValue(machine::isStuttering);
+        syncManager.syncValue("powerfail", powerfailSyncer);
+        errorMap.put(
+            powerfailSyncer,
+            () -> machine.mTooltipCache.getData(
+                "GT5U.machines.stalled_stuttering.tooltip",
+                StatCollector.translateToLocal("GT5U.machines.powersource.power")));
+    }
+
+    @Override
+    protected ParentWidget<?> createContentSection(ModularPanel panel, PanelSyncManager syncManager) {
+        return super.createContentSection(panel, syncManager).child(createItemRecipeArea(panel, syncManager));
+    }
+
+    protected Flow createItemRecipeArea(ModularPanel panel, PanelSyncManager syncManager) {
+        return Flow.row()
+            .coverChildren()
+            .horizontalCenter()
+            .childPadding((2 * SLOT_SIZE - properties.progressBarWidthMUI2) / 2)
+            .mainAxisAlignment(Alignment.MainAxis.CENTER)
+            .child(createItemInputSlots(panel, syncManager))
+            .child(createProgressBar(panel, syncManager))
+            .child(createItemOutputSlots(panel, syncManager));
+    }
+
+    @Override
+    protected Flow createBottomLeftCornerFlow(ModularPanel panel, PanelSyncManager syncManager) {
+        Flow cornerFlow = super.createBottomLeftCornerFlow(panel, syncManager);
+        if (machine.isSteampowered()) return cornerFlow;
+
+        return cornerFlow
+            .child(
+                createAutoOutputButton(
+                    properties.maxFluidOutputs > 0,
+                    syncManager,
+                    "fluidAutoOutput",
+                    GTGuiTextures.OVERLAY_BUTTON_AUTOOUTPUT_FLUID,
+                    BaseTileEntity.FLUID_TRANSFER_TOOLTIP,
+                    "GT5U.gui.button.forbidden.reason.fluid"))
+            .child(
+                createAutoOutputButton(
+                    properties.maxItemOutputs > 0,
+                    syncManager,
+                    "itemAutoOutput",
+                    GTGuiTextures.OVERLAY_BUTTON_AUTOOUTPUT_ITEM,
+                    BaseTileEntity.ITEM_TRANSFER_TOOLTIP,
+                    "GT5U.gui.button.forbidden.reason.item"))
+
+            .childIf(properties.maxFluidInputs > 0, () -> createFluidInputSlot().marginLeft(SLOT_SIZE / 2));
+    }
+
+    protected Widget<?> createAutoOutputButton(boolean isEnabled, PanelSyncManager syncManager, String syncKey,
+        UITexture overlay, String tooltipKey, String disabledTooltipKey) {
+        // needed to make the IPanelBuilder lambda and ToggleButton override work
+        ToggleButton[] button = new ToggleButton[1];
+
+        IPanelHandler autoOutputPanel = syncManager
+            .syncedPanel("sideSelection_" + syncKey, true, (_, _) -> openSideSelector(button, syncKey));
+
+        button[0] = new ToggleButton() {
+
+            @Override
+            public @NotNull Result onMousePressed(int mouseButton) {
+                if (!isEnabled) return Result.IGNORE;
+                if (Interactable.hasShiftDown()) {
+                    autoOutputPanel.openPanel();
+                    return Result.SUCCESS;
+                }
+                return super.onMousePressed(mouseButton);
+            }
+        }.value(syncManager.findSyncHandler(syncKey, BooleanSyncValue.class))
+            .tooltipShowUpTimer(TOOLTIP_DELAY)
+            .overlay(overlay);
+
+        if (isEnabled) button[0].addTooltipLine(StatCollector.translateToLocal(tooltipKey));
+        if (!isEnabled) button[0].tooltip(
+            t -> t.addLine(StatCollector.translateToLocal(BUTTON_FORBIDDEN_TOOLTIP))
+                .addLine(
+                    GTUtility.getColoredSecondaryTooltip(
+                        StatCollector.translateToLocalFormatted(
+                            "GT5U.gui.button.forbidden.reason",
+                            StatCollector.translateToLocal(disabledTooltipKey)))))
+            .widgetTheme(GTWidgetThemes.TOGGLE_BUTTON_DISABLED);
+
+        return button[0];
+    }
+
+    private ModularPanel openSideSelector(ToggleButton[] parent, String syncKey) {
+
+        ModularPanel panel = new ModularPanel("sideSelector_" + syncKey) {
+
+            @Override
+            public boolean isDraggable() {
+                return false;
+            }
+        }.relative(parent[0])
+            .background(IDrawable.EMPTY)
+            .coverChildren();
+        List<IWidget> buttons = new ArrayList<>();
+
+        // Top
+        buttons.add(null);
+        buttons
+            .add(createSideSelectionButton(panel, ForgeDirection.UP, GTGuiTextures.OVERLAY_BUTTON_SIDE_SELECTION_UP));
+        buttons.add(null);
+
+        // Middle
+        buttons.add(
+            createSideSelectionButton(
+                panel,
+                this.machine.mMainFacing.getRotation(ForgeDirection.UP),
+                GTGuiTextures.OVERLAY_BUTTON_SIDE_SELECTION_LEFT));
+        buttons.add(null);
+        buttons.add(
+            createSideSelectionButton(
+                panel,
+                this.machine.mMainFacing.getRotation(ForgeDirection.DOWN),
+                GTGuiTextures.OVERLAY_BUTTON_SIDE_SELECTION_RIGHT));
+
+        // Bottom
+        buttons.add(null);
+        buttons.add(
+            createSideSelectionButton(panel, ForgeDirection.DOWN, GTGuiTextures.OVERLAY_BUTTON_SIDE_SELECTION_DOWN));
+        buttons.add(
+            createSideSelectionButton(
+                panel,
+                this.machine.mMainFacing.getOpposite(),
+                GTGuiTextures.OVERLAY_BUTTON_SIDE_SELECTION_BACK));
 
         return panel.child(
-            Flow.column()
-                .child(createTopRightCornerColumn())
-                .sizeRel(1)
-                .padding(borderRadius)
-                .child(createContentHolderRow(panel, syncManager))
-                .childIf(machine.supportsInventoryRow(), () -> createInventoryRow(panel, syncManager)));
+            new Grid().coverChildren()
+                .gridOf(3, buttons));
     }
 
-    protected void registerSyncValues(PanelSyncManager syncManager) {
-
-        syncManager.registerSlotGroup("item_inv", 1);
-
-        BooleanSyncValue powerSwitchSyncer = new BooleanSyncValue(baseMetaTileEntity::isAllowedToWork, bool -> {
-            if (isPowerSwitchDisabled()) return;
-            if (bool) baseMetaTileEntity.enableWorking();
-            else {
-                baseMetaTileEntity.disableWorking();
+    private IWidget createSideSelectionButton(ModularPanel panel, ForgeDirection direction, IDrawable texture) {
+        InteractionSyncHandler sideSelectionHandler = new InteractionSyncHandler().setOnMousePressed(_ -> {
+            // This is copied 1:1 from MetaTileEntity code because i didn't want to hook into onWrenchRightClick
+            if (!baseMetaTileEntity.isValidFacing(direction)) {
+                return;
             }
+            baseMetaTileEntity.setFrontFacing(direction);
+
+            for (final ForgeDirection s : ForgeDirection.VALID_DIRECTIONS) {
+                final IGregTechTileEntity iGregTechTileEntity = baseMetaTileEntity.getIGregTechTileEntityAtSide(s);
+                if (iGregTechTileEntity != null) {
+                    if (iGregTechTileEntity.getMetaTileEntity() instanceof MTEPipeLaser pipe) pipe.updateNetwork(true);
+                    if (iGregTechTileEntity.getMetaTileEntity() instanceof MTEPipeData pipe) pipe.updateNetwork(true);
+                }
+            }
+            panel.closeIfOpen();
         });
-        syncManager.syncValue("powerSwitch", powerSwitchSyncer);
-
-        BooleanSyncValue mufflerSyncer = new BooleanSyncValue(
-            baseMetaTileEntity::isMuffled,
-            baseMetaTileEntity::setMuffler);
-        syncManager.syncValue("mufflerSyncer", mufflerSyncer);
-
+        return new ButtonWidget<>().syncHandler(sideSelectionHandler)
+            .overlay(texture);
     }
 
-    protected ModularPanel getBasePanel(PosGuiData guiData, PanelSyncManager syncManager, UISettings uiSettings) {
-        return new GTBaseGuiBuilder(machine, guiData, syncManager, uiSettings).setWidth(getBasePanelWidth())
-            .setHeight(getBasePanelHeight())
-            .doesAddGregTechLogo(false)
-            .doesAddGhostCircuitSlot(false)
-            // Has to be replaced with inventory row for alignment reasons
-            .doesBindPlayerInventory(false)
-            .build();
+    @Override
+    protected Flow createBottomRightCornerFlow(ModularPanel panel, PanelSyncManager syncManager) {
+        return super.createBottomRightCornerFlow(panel, syncManager)
+            .childIf(this.doesAddSpecialSlot(), this::createSpecialSlot)
+            .childIf(properties.maxFluidOutputs > 0, this::createFluidOutputSlot);
     }
 
-    protected int getBasePanelWidth() {
-        return 178;
-    }
-
-    protected int getBasePanelHeight() {
-        return 166;
-    }
-
-    protected Flow createContentHolderRow(ModularPanel panel, PanelSyncManager syncManager) {
-        Flow contentFlow = Flow.row()
-            .size(getContentRowWidth(), getContentRowHeight())
-            .paddingBottom(4);
-        contentFlow.child(createContentSection(panel, syncManager));
-        return contentFlow;
-    }
-
-    protected ParentWidget<?> createContentSection(ModularPanel panel, PanelSyncManager syncManager) {
-        return new ParentWidget<>().sizeRel(1)
-            .childIf(this.supportsLeftCornerFlow(), () -> createLeftCornerFlow(panel, syncManager))
-            .childIf(this.supportsRightCornerFlow(), () -> createRightCornerFlow(panel, syncManager));
-    }
-
-    protected int getContentRowWidth() {
-        return getBasePanelWidth() - 2 * borderRadius;
-    }
-
-    protected int getContentRowHeight() {
-        return (getBasePanelHeight() - borderRadius * 2) - (machine.doesBindPlayerInventory() ? 80 : 0);
-    }
-
-    protected boolean supportsLeftCornerFlow() {
+    protected boolean supportsChargerSlot() {
         return true;
     }
 
-    // Row by default, going left to right
-    protected Flow createLeftCornerFlow(ModularPanel panel, PanelSyncManager syncManager) {
-        Flow cornerFlow = Flow.row()
-            .coverChildren()
-            .align(Alignment.BottomLeft)
-            .paddingLeft(4);
-        return cornerFlow;
+    @Override
+    protected ParentWidget<?> createBottomSection(ModularPanel panel, PanelSyncManager syncManager) {
+        return super.createBottomSection(panel, syncManager).child(
+            Flow.column()
+                .coverChildren()
+                .decoration()
+                .bottomRel(0)
+                .horizontalCenter()
+                .child(createErrorWidget(panel, syncManager))
+                .childIf(supportsChargerSlot(), this::createChargerSlot));
     }
 
-    protected boolean supportsRightCornerFlow() {
-        return true;
-    }
-
-    // Row by default, going left to right
-    protected Flow createRightCornerFlow(ModularPanel panel, PanelSyncManager syncManager) {
-        Flow cornerFlow = Flow.row()
-            .mainAxisAlignment(Alignment.MainAxis.END)
-            .reverseLayout(true)
-            .coverChildren()
-            .align(Alignment.BottomRight)
-            .paddingRight(4);
-
-        cornerFlow.childIf(this.doesAddCircuitSlot(), () -> this.createCircuitSlot(syncManager));
-
-        return cornerFlow;
-    }
-
-    protected boolean doesAddGregTechLogo() {
-        return true;
-    }
-
-    protected UITexture getLogoTexture() {
-        return GTGuiTextures.OVERLAY_GREGTECH_LOGO;
-    }
-
-    protected IWidget createInventoryRow(ModularPanel panel, PanelSyncManager syncManager) {
-        return new Row().widthRel(1)
-            .height(76)
-            .alignX(0)
-            .childIf(
-                machine.doesBindPlayerInventory(),
-                () -> SlotGroupWidget.playerInventory(false)
-                    .marginLeft(4));
-    }
-
-    protected boolean doesAddSpecialSlot() {
-        return true;
-    }
-
-    // by default, adds an empty widget, things can override this to add anything in the bottom right corner
-    // typically, this is used for the 'special slot' on singleblocks
-    protected Widget<? extends Widget<?>> createSpecialSlot() {
-        return IDrawable.EMPTY.asWidget()
-            .size(18)
-            .marginTop(4);
-    }
-
-    protected boolean isPowerSwitchDisabled() {
-        return false;
-    }
-
-    protected IDrawable.DrawableWidget createLogo() {
-        return new IDrawable.DrawableWidget(getLogoTexture()).size(18)
-            .marginLeft(2);
-    }
-
-    // the base class is an instance of ICircuitConfiguration
-    protected boolean doesAddCircuitSlot() {
-        return machine.allowSelectCircuit();
-    }
-
-    protected Widget<? extends Widget<?>> createCircuitSlot(PanelSyncManager syncManager) {
-        return CommonWidgets.createCircuitSlot(syncManager, machine)
+    /**
+     * Typically, this is used for the 'special slot' on singleblocks
+     */
+    protected ItemSlot createSpecialSlot() {
+        String[] tooltipKeys = new String[2];
+        if (properties.useSpecialSlot) {
+            tooltipKeys[0] = "GT5U.machines.special_slot.tooltip";
+            tooltipKeys[1] = "GT5U.machines.special_slot.tooltip.1";
+        } else {
+            tooltipKeys[0] = "GT5U.machines.unused_slot.tooltip";
+            tooltipKeys[1] = "GT5U.machines.unused_slot.tooltip.1";
+        }
+        return new ItemSlot().marginRight(SLOT_SIZE / 2)
+            .slot(new MachineModularSlot(machine.inventoryHandler, machine.getSpecialSlotIndex(), baseMetaTileEntity))
+            .backgroundOverlay(
+                properties.useSpecialSlot ? slotOverlayFunction.apply(0, false, false, true) : IDrawable.NONE)
+            .tooltip(
+                t -> t.addLine(StatCollector.translateToLocal(tooltipKeys[0]))
+                    .addLine(StatCollector.translateToLocal(tooltipKeys[1])))
             .tooltipShowUpTimer(TOOLTIP_DELAY);
     }
 
-    protected Flow createTopRightCornerColumn() {
-        return Flow.column()
-            .coverChildren()
-            .align(Alignment.TopRight)
-            .child(createMufflerButton())
-            .child(createPowerSwitchButton());
+    protected ProgressWidget createProgressBar(ModularPanel panel, PanelSyncManager syncManager) {
+        return new GTProgressWidget()
+            .neiTransferRect(properties.neiTransferRectId, new Object[] { machine }, createTooltipForProgressBar())
+            .value(new DoubleSyncValue(() -> (double) machine.mProgresstime / machine.mMaxProgresstime))
+            .texture(progressBarTexture, properties.progressBarWidthMUI2)
+            .size(properties.progressBarWidthMUI2, properties.progressBarHeightMUI2 / 2)
+            .direction(properties.progressBarDirectionMUI2)
+            .tooltipShowUpTimer(TOOLTIP_DELAY);
     }
 
-    protected ToggleButton createMufflerButton() {
-        return CommonWidgets.createMuffleButton("mufflerSyncer")
-            .background(IDrawable.EMPTY)
-            .selectedBackground(IDrawable.EMPTY);
+    protected String createTooltipForProgressBar() {
+        final byte machineTier = machine.mTier;
+        String tierName = GTUtility.getColoredTierNameFromTier(machineTier);
+        return StatCollector.translateToLocalFormatted("GT5U.machines.nei_transfer.voltage.tooltip", tierName);
     }
 
-    protected ToggleButton createPowerSwitchButton() {
-        return CommonWidgets.createSmallPowerSwitchButton("powerSwitch", machine.getBaseMetaTileEntity())
-            .background(IDrawable.EMPTY)
+    protected Widget<?> createErrorWidget(ModularPanel panel, PanelSyncManager syncManager) {
+        BooleanSyncValue hasErrorSyncer = new BooleanSyncValue(
+            () -> errorMap.keySet()
+                .stream()
+                .anyMatch(BooleanSyncValue::getBoolValue));
+        syncManager.syncValue("hasError", hasErrorSyncer);
+
+        IDrawable.DrawableWidget widget = new IDrawable.DrawableWidget(IDrawable.EMPTY);
+        hasErrorSyncer.changeListener(widget::markTooltipDirty);
+
+        return widget.size(SLOT_SIZE)
+            .widgetTheme(GTWidgetThemes.PICTURE_ERROR)
+            .setEnabledIf(_ -> hasErrorSyncer.getBoolValue())
             .tooltipShowUpTimer(TOOLTIP_DELAY)
-            .selectedBackground(IDrawable.EMPTY);
+            .tooltipBuilder(
+                t -> errorMap.keySet()
+                    .stream()
+                    .filter(BooleanSyncValue::getBoolValue)
+                    .findFirst()
+                    .ifPresent(
+                        key -> addTooltipDataToRichTooltip(
+                            () -> errorMap.get(key)
+                                .get()).accept(t)));
     }
 
+    protected ParentWidget<?> createItemInputSlots(ModularPanel panel, PanelSyncManager syncManager) {
+        return new ParentWidget<>().size(3 * SLOT_SIZE)
+            .child(
+                new Grid().coverChildren()
+                    .gridOfElements(
+                        mapInSlotsToMatrix(),
+                        (_, _, i,
+                            key) -> key == 'c'
+                                ? new ItemSlot().backgroundOverlay(slotOverlayFunction.apply(i, false, false, false))
+                                    .slot(
+                                        new MachineModularSlot(
+                                            machine.inventoryHandler,
+                                            machine.getInputSlot() + i,
+                                            baseMetaTileEntity).slotGroup("item_inv"))
+                                : null)
+                    .verticalCenter()
+                    .rightRel(0));
+    }
+
+    protected FluidSlot createFluidInputSlot() {
+        return new FluidSlot().backgroundOverlay(slotOverlayFunction.apply(0, true, false, false))
+            .syncHandler(new FluidSlotSyncHandler(machine.getFluidTank()) {
+
+                @Override
+                protected void onValueChanged() {
+                    super.onValueChanged();
+                    if (this.getSyncManager()
+                        .isClient()) return;
+                    baseMetaTileEntity.markInventoryBeenModified();
+                }
+            });
+    }
+
+    protected ParentWidget<?> createItemOutputSlots(ModularPanel panel, PanelSyncManager syncManager) {
+        return new ParentWidget<>().size(3 * SLOT_SIZE)
+            .child(
+                new Grid().coverChildren()
+                    .gridOfElements(
+                        mapOutSlotsToMatrix(),
+                        (_, _, i,
+                            key) -> key == 'c'
+                                ? new ItemSlot().backgroundOverlay(slotOverlayFunction.apply(i, false, true, false))
+                                    .slot(
+                                        new MachineModularSlot(
+                                            machine.inventoryHandler,
+                                            machine.getOutputSlot() + i,
+                                            baseMetaTileEntity).slotGroup("item_inv")
+                                                .accessibility(false, true))
+                                : null)
+                    .verticalCenter()
+                    .leftRel(0));
+    }
+
+    protected FluidSlot createFluidOutputSlot() {
+        return new FluidSlot().backgroundOverlay(slotOverlayFunction.apply(0, true, true, false))
+            .syncHandler(new FluidSlotSyncHandler(machine.getFluidOutputTank()) {
+
+                @Override
+                protected void onValueChanged() {
+                    super.onValueChanged();
+                    if (this.getSyncManager()
+                        .isClient()) return;
+                    baseMetaTileEntity.markInventoryBeenModified();
+                }
+
+            }.canFillSlot(false));
+    }
+
+    protected List<CharList> mapInSlotsToMatrix() {
+        int slots = properties.maxItemInputs;
+        String[] matrix = new String[1 + ((slots - 1) / 3)];
+
+        Arrays.fill(matrix, "");
+        switch (slots) {
+            case 1 -> matrix[0] = "c";
+            case 2 -> matrix[0] = "cc";
+            case 3 -> matrix[0] = "ccc";
+            case 4 -> {
+                matrix[0] = "cc";
+                matrix[1] = "cc";
+            }
+            case 5 -> {
+                matrix[0] = " cc";
+                matrix[1] = "ccc";
+            }
+            case 6 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+            }
+            case 7 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = "  c";
+            }
+            case 8 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = " cc";
+            }
+            case 9 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = "ccc";
+            }
+        }
+
+        return Arrays.stream(matrix)
+            .map(String::toCharArray)
+            .map(CharList::of)
+            .collect(Collectors.toList());
+    }
+
+    protected List<CharList> mapOutSlotsToMatrix() {
+        int slots = properties.maxItemOutputs;
+
+        String[] matrix = new String[1 + ((slots - 1) / 3)];
+
+        Arrays.fill(matrix, "");
+        switch (slots) {
+            case 1 -> matrix[0] = "c";
+            case 2 -> matrix[0] = "cc";
+            case 3 -> matrix[0] = "ccc";
+            case 4 -> {
+                matrix[0] = "cc";
+                matrix[1] = "cc";
+            }
+            case 5 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "cc ";
+            }
+            case 6 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+            }
+            case 7 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = "c  ";
+            }
+            case 8 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = "cc ";
+            }
+            case 9 -> {
+                matrix[0] = "ccc";
+                matrix[1] = "ccc";
+                matrix[2] = "ccc";
+            }
+        }
+        return Arrays.stream(matrix)
+            .map(String::toCharArray)
+            .map(CharList::of)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    protected boolean doesAddGregTechLogo() {
+        return this.mAddGregTechLogo;
+    }
 }

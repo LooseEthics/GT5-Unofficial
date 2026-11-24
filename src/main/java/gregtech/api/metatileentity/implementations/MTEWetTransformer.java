@@ -5,28 +5,38 @@ import static gregtech.api.enums.GTValues.V;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import org.apache.commons.lang3.ArrayUtils;
-
+import gregtech.api.enums.GTValues;
 import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
+import gregtech.api.util.GTSplit;
 import gregtech.api.util.GTUtility;
 
+@IMetaTileEntity.SkipGenerateDescription
+@IMetaTileEntity.SkipGenerateName
 public class MTEWetTransformer extends MTETransformer {
 
     private boolean mHalfMode = false;
 
-    public MTEWetTransformer(int aID, String aName, String aNameRegional, int aTier, String aDescription) {
-        super(aID, aName, aNameRegional, aTier, aDescription);
+    public MTEWetTransformer(int aID, String aName, String aNameRegional, int aTier) {
+        super(aID, aName, aNameRegional, aTier);
     }
 
     public MTEWetTransformer(String aName, int aTier, String[] aDescription, ITexture[][][] aTextures) {
         super(aName, aTier, aDescription, aTextures);
+    }
+
+    @Override
+    public String getLocalName() {
+        if (!hasOwnLocalName()) return super.getLocalName();
+        return StatCollector.translateToLocalFormatted(
+            "gt.blockmachines.wettransformer.name",
+            GTValues.getLocalizedLongVoltageName(mTier),
+            GTValues.VN[mTier]);
     }
 
     @Override
@@ -68,16 +78,13 @@ public class MTEWetTransformer extends MTETransformer {
 
     @Override
     public String[] getDescription() {
-        return ArrayUtils.addAll(
-            mDescriptionArray,
-            StatCollector.translateToLocal("GT5U.machines.MTETransformerWet.descLn1"),
-            StatCollector.translateToLocal("GT5U.machines.MTETransformerWet.descLn2"),
-            StatCollector.translateToLocal("GT5U.machines.MTETransformerWet.descLn3"),
-            EnumChatFormatting.BLUE + "Tec"
-                + EnumChatFormatting.DARK_BLUE
-                + "Tech"
-                + EnumChatFormatting.BLUE
-                + ": Interdimensional");
+        return GTSplit.splitLocalizedFormattedWithPrefix(
+            "gt.blockmachines.transformer_advanced.desc",
+            super.getDescription()[0],
+            16,
+            64,
+            8,
+            32);
     }
 
     @Override
@@ -102,6 +109,14 @@ public class MTEWetTransformer extends MTETransformer {
     }
 
     @Override
+    public long displayedAmperesIn() {
+        if (mHalfMode) {
+            return getBaseMetaTileEntity().isAllowedToWork() ? 8 : 32;
+        }
+        return getBaseMetaTileEntity().isAllowedToWork() ? 16 : 64;
+    }
+
+    @Override
     public void saveNBTData(NBTTagCompound aNBT) {
         super.saveNBTData(aNBT);
         aNBT.setBoolean("mHalfMode", mHalfMode);
@@ -118,9 +133,9 @@ public class MTEWetTransformer extends MTETransformer {
         ItemStack aTool) {
         this.mHalfMode = !mHalfMode;
         if (this.mHalfMode) {
-            GTUtility.sendChatToPlayer(aPlayer, "Transformer is now running at 8A:32A in/out Ratio.");
+            GTUtility.sendChatTrans(aPlayer, "GT5U.chat.wet_transformer.half_mode.enable");
         } else {
-            GTUtility.sendChatToPlayer(aPlayer, "Transformer is now running at 16A:64A in/out Ratio.");
+            GTUtility.sendChatTrans(aPlayer, "GT5U.chat.wet_transformer.half_mode.disable");
         }
     }
 }

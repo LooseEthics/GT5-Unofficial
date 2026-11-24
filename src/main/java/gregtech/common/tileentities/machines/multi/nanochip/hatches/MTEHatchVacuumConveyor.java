@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -14,17 +13,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumChatFormatting;
-import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.fluids.FluidStack;
+
+import org.jetbrains.annotations.Nullable;
 
 import com.cleanroommc.modularui.factory.PosGuiData;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
 
-import gregtech.api.enums.Dyes;
 import gregtech.api.interfaces.ITexture;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatch;
@@ -32,6 +31,7 @@ import gregtech.api.modularui2.GTGuiTheme;
 import gregtech.api.modularui2.GTGuiThemes;
 import gregtech.common.gui.modularui.hatch.MTEHatchVacuumConveyorGui;
 import gregtech.common.tileentities.machines.multi.nanochip.MTENanochipAssemblyComplex;
+import gregtech.common.tileentities.machines.multi.nanochip.MTENanochipAssemblyModuleBase;
 import gregtech.common.tileentities.machines.multi.nanochip.factory.VacuumFactoryElement;
 import gregtech.common.tileentities.machines.multi.nanochip.factory.VacuumFactoryGrid;
 import gregtech.common.tileentities.machines.multi.nanochip.factory.VacuumFactoryNetwork;
@@ -46,6 +46,7 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
     public static final int VACUUM_MOVE_TICK = 17;
     public VacuumFactoryNetwork network;
     protected MTENanochipAssemblyComplex mainController;
+    protected MTENanochipAssemblyModuleBase<?> module;
     public CircuitComponentPacket contents;
 
     // Identifier used to identify this hatch uniquely inside a multiblock.
@@ -69,6 +70,7 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
     public void onColorChangeServer(byte aColor) {
         super.onColorChangeServer(aColor);
         VacuumFactoryGrid.INSTANCE.updateElement(this);
+        if (module != null) module.setStructureUpdateTime(1); // update the structure when color is changed
     }
 
     @Override
@@ -109,15 +111,27 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
         this.mainController = main;
     }
 
+    public void setModule(MTENanochipAssemblyModuleBase<?> module) {
+        this.module = module;
+    }
+
     public void unifyPacket(CircuitComponentPacket packet) {
         if (contents == null) contents = packet;
         else contents.unifyWith(packet);
+        this.markDirty();
+        // Components are fake items kept outside mInventory, so the inventory-dirty flag never fires for them. Push a
+        // recipe check directly so a module waiting on these inputs restarts the moment a component arrives.
+        if (packet != null && !packet.isEmpty()) {
+            notifyWatchers();
+        }
     }
 
     @Override
     public void onPostTick(IGregTechTileEntity aBaseMetaTileEntity, long aTick) {
         if (aBaseMetaTileEntity.isServerSide()) {
             if (aTick % 20 == VACUUM_MOVE_TICK) {
+                // in case the module its attached to ever gets destroyed or made invalid, set it to null to not leak
+                if (this.module != null && !this.module.isValid()) this.module = null;
                 if (contents == null) {
                     getBaseMetaTileEntity().setActive(false);
                 } else {
@@ -133,20 +147,16 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
     public void getWailaNBTData(EntityPlayerMP player, TileEntity tile, NBTTagCompound tag, World world, int x, int y,
         int z) {
         super.getWailaNBTData(player, tile, tag, world, x, y, z);
-        tag.setByte("color", (byte) (getColorization() + (byte) 1));
-
+        tag.setByte("color", (byte) (getColorization() + 1));
     }
 
     @Override
     public void getWailaBody(ItemStack itemStack, List<String> currenttip, IWailaDataAccessor accessor,
         IWailaConfigHandler config) {
         super.getWailaBody(itemStack, currenttip, accessor, config);
-        byte color = (byte) (accessor.getNBTData()
+        final byte color = (byte) (accessor.getNBTData()
             .getByte("color") - 1);
-        if (color >= 0 && color < 16) currenttip.add(
-            StatCollector.translateToLocalFormatted(
-                "GT5U.waila.hatch.color_channel",
-                Dyes.VALUES[color].formatting + Dyes.VALUES[color].getLocalizedDyeName() + EnumChatFormatting.GRAY));
+        MTEHatch.addColorChannelInfo(currenttip, color);
     }
 
     @Override
@@ -231,7 +241,7 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
     }
 
     @Override
-    protected GTGuiTheme getGuiTheme() {
+    public GTGuiTheme getGuiTheme() {
         return GTGuiThemes.NANOCHIP;
     }
 
@@ -252,13 +262,35 @@ public abstract class MTEHatchVacuumConveyor extends MTEHatch implements VacuumF
             info.add("Hatch ID: " + identifier);
         }
         if (contents != null) {
-            Map<CircuitComponent, Long> components = contents.getComponents();
-            for (Map.Entry<CircuitComponent, Long> component : components.entrySet()) {
-                info.add(
-                    EnumChatFormatting.YELLOW + component.getKey()
-                        .getLocalizedName() + ": " + EnumChatFormatting.WHITE + formatNumber(component.getValue()));
+            var components = contents.getComponents();
+            for (var entry : components.entrySet()) {
+                CircuitComponent cc = entry.getKey();
+                for (var pair : entry.getValue()) {
+                    if (pair.getLeft() == null) {
+                        info.add(
+                            EnumChatFormatting.YELLOW + cc.getLocalizedName()
+                                + ": "
+                                + EnumChatFormatting.WHITE
+                                + formatNumber(pair.getRight()));
+                    } else {
+                        info.add(
+                            EnumChatFormatting.YELLOW + cc.getLocalizedName()
+                                + "(Renamed to: "
+                                + pair.getLeft()
+                                + "): "
+                                + EnumChatFormatting.WHITE
+                                + formatNumber(pair.getRight()));
+                    }
+                }
             }
         }
         return info.toArray(new String[] {});
+    }
+
+    @Override
+    public @Nullable List<ItemStack> getItemsForHoloGlasses() {
+        if (this.contents == null) return null;
+
+        return contents.getRealItemRepresentations();
     }
 }

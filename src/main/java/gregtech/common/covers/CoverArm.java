@@ -1,11 +1,8 @@
 package gregtech.common.covers;
 
-import static net.minecraft.util.StatCollector.translateToLocal;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagInt;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.fluids.Fluid;
 
@@ -32,12 +29,6 @@ public class CoverArm extends Cover {
     private int internalSlotId;
     private int externalSlotId;
     public final int mTickRate;
-    // TODO: REMOVE AFTER 2.9
-    // msb converted, 2nd : direction (1=export)
-    // right 14 bits: internalSlot, next 14 bits adjSlot, 0 = all, slot = -1
-    public static final int EXPORT_MASK = 0x40000000;
-    public static final int SLOT_ID_MASK = 0x3FFF;
-    public static final int CONVERTED_BIT = 0x80000000;
 
     public CoverArm(CoverContext context, int aTickRate, ITexture coverTexture) {
         super(context, coverTexture);
@@ -94,8 +85,8 @@ public class CoverArm extends Cover {
     }
 
     private void sendMessageToPlayer(EntityPlayer aPlayer) {
-        if (export) GTUtility.sendChatToPlayer(aPlayer, translateToLocal("gt.interact.desc.out_slot") + externalSlotId);
-        else GTUtility.sendChatToPlayer(aPlayer, translateToLocal("gt.interact.desc.in_slot") + internalSlotId);
+        if (export) GTUtility.sendChatTrans(aPlayer, "gt.interact.desc.out_slot.s", externalSlotId);
+        else GTUtility.sendChatTrans(aPlayer, "gt.interact.desc.in_slot.s", internalSlotId);
     }
 
     @Override
@@ -114,13 +105,6 @@ public class CoverArm extends Cover {
 
     @Override
     protected void readDataFromNbt(NBTBase nbt) {
-        if (nbt instanceof NBTTagInt legacyData) {
-            int data = legacyData.func_150287_d();
-            this.export = getFlagExport(data);
-            this.internalSlotId = getFlagInternalSlot(data);
-            this.externalSlotId = getFlagExternalSlot(data);
-            return;
-        }
         NBTTagCompound tag = (NBTTagCompound) nbt;
         this.export = tag.getBoolean("export");
         this.internalSlotId = tag.getInteger("internalSlotId");
@@ -142,6 +126,7 @@ public class CoverArm extends Cover {
         return true;
     }
 
+    @Override
     public boolean letsRedstoneGoOut() {
         return true;
     }
@@ -210,17 +195,6 @@ public class CoverArm extends Cover {
         this.externalSlotId = externalSlotId;
     }
 
-    private boolean getFlagExport(int coverVariable) {
-        return (coverVariable & CoverArm.EXPORT_MASK) != 0;
-    }
-
-    private int getFlagInternalSlot(int coverVariable) {
-        return coverVariable & CoverArm.SLOT_ID_MASK;
-    }
-
-    private int getFlagExternalSlot(int coverVariable) {
-        return (coverVariable >> 14) & CoverArm.SLOT_ID_MASK;
-    }
     // GUI stuff
 
     @Override

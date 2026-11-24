@@ -2,6 +2,7 @@ package gregtech.loaders.postload.recipes;
 
 import static gregtech.api.enums.GTValues.M;
 import static gregtech.api.enums.Mods.BuildCraftTransport;
+import static gregtech.api.enums.Mods.Railcraft;
 import static gregtech.api.recipe.RecipeMaps.chemicalBathRecipes;
 import static gregtech.api.util.GTModHandler.getModItem;
 import static gregtech.api.util.GTRecipeBuilder.INGOTS;
@@ -16,6 +17,7 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import bartworks.common.loaders.ItemRegistry;
 import bartworks.system.material.WerkstoffLoader;
 import gregtech.api.GregTechAPI;
 import gregtech.api.enums.Dyes;
@@ -24,6 +26,7 @@ import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Materials;
 import gregtech.api.enums.OrePrefixes;
 import gregtech.api.enums.TierEU;
+import gregtech.api.objects.OreDictItemStack;
 import gregtech.api.util.GTModHandler;
 import gregtech.api.util.GTOreDictUnificator;
 
@@ -32,6 +35,16 @@ public class ChemicalBathRecipes implements Runnable {
 
     @Override
     public void run() {
+        if (Railcraft.isModLoaded()) {
+            GTValues.RA.stdBuilder()
+                .itemInputs(new OreDictItemStack("logWood", 1))
+                .itemOutputs(GTModHandler.getModItem(Railcraft.ID, "cube", 1L, 8))
+                .fluidInputs(Materials.Creosote.getFluid(750L))
+                .duration(16 * TICKS)
+                .eut(TierEU.RECIPE_ULV)
+                .addTo(chemicalBathRecipes);
+        }
+
         GTValues.RA.stdBuilder()
             .itemInputs(ItemList.Food_Raw_Fries.get(1))
             .itemOutputs(ItemList.Food_Fries.get(1))
@@ -41,16 +54,8 @@ public class ChemicalBathRecipes implements Runnable {
             .addTo(chemicalBathRecipes);
 
         GTValues.RA.stdBuilder()
-            .itemInputs(GTModHandler.getIC2Item("dynamite", 1))
-            .itemOutputs(GTModHandler.getIC2Item("stickyDynamite", 1))
-            .fluidInputs(Materials.Glue.getFluid(10))
-            .duration(16 * TICKS)
-            .eut(4)
-            .addTo(chemicalBathRecipes);
-
-        GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.frameGt, Materials.Steel, 1))
-            .itemOutputs(GTModHandler.getIC2Item("reinforcedStone", 1))
+            .itemOutputs(ItemList.Block_ReinforcedConcrete.get(1L))
             .fluidInputs(Materials.Concrete.getMolten(1 * INGOTS))
             .duration(10 * SECONDS)
             .eut(4)
@@ -350,7 +355,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 3000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.Pyrolusite, 1))
@@ -361,7 +366,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 7000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.Quartzite, 1))
@@ -372,7 +377,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 3000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.CertusQuartz, 1))
@@ -383,7 +388,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 7000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.Bauxite, 1))
@@ -394,7 +399,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 5000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.Thorium, 1))
@@ -405,7 +410,7 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 3000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(chemicalBathRecipes);
         GTValues.RA.stdBuilder()
             .itemInputs(GTOreDictUnificator.get(OrePrefixes.crushed, Materials.Stibnite, 1))
@@ -416,7 +421,48 @@ public class ChemicalBathRecipes implements Runnable {
             .outputChances(10000, 5000, 4000)
             .fluidInputs(Materials.SodiumPersulfate.getFluid(100))
             .duration(40 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
+            .addTo(chemicalBathRecipes);
+
+        // Borosilicate Dirtying
+        GTValues.RA.stdBuilder()
+            .itemInputs(new ItemStack(ItemRegistry.bw_glasses[1], 1, 1))
+            .itemOutputs(new ItemStack(ItemRegistry.bw_glasses[0], 1, 6))
+            .fluidInputs(Materials.NitricAcid.getFluid(4_000))
+            .duration(5 * SECONDS)
+            .eut(TierEU.RECIPE_UV)
+            .addTo(chemicalBathRecipes);
+
+        GTValues.RA.stdBuilder()
+            .itemInputs(new ItemStack(ItemRegistry.bw_glasses[1], 1, 2))
+            .itemOutputs(new ItemStack(ItemRegistry.bw_glasses[0], 1, 7))
+            .fluidInputs(Materials.NitricAcid.getFluid(4_000))
+            .duration(5 * SECONDS)
+            .eut(TierEU.RECIPE_UHV)
+            .addTo(chemicalBathRecipes);
+
+        GTValues.RA.stdBuilder()
+            .itemInputs(new ItemStack(ItemRegistry.bw_glasses[1], 1, 3))
+            .itemOutputs(new ItemStack(ItemRegistry.bw_glasses[0], 1, 8))
+            .fluidInputs(Materials.NitricAcid.getFluid(4_000))
+            .duration(5 * SECONDS)
+            .eut(TierEU.RECIPE_UEV)
+            .addTo(chemicalBathRecipes);
+
+        GTValues.RA.stdBuilder()
+            .itemInputs(new ItemStack(ItemRegistry.bw_glasses[1], 1, 4))
+            .itemOutputs(new ItemStack(ItemRegistry.bw_glasses[0], 1, 9))
+            .fluidInputs(Materials.NitricAcid.getFluid(4_000))
+            .duration(5 * SECONDS)
+            .eut(TierEU.RECIPE_UIV)
+            .addTo(chemicalBathRecipes);
+
+        GTValues.RA.stdBuilder()
+            .itemInputs(new ItemStack(ItemRegistry.bw_glasses[1], 1, 5))
+            .itemOutputs(new ItemStack(ItemRegistry.bw_glasses[0], 1, 10))
+            .fluidInputs(Materials.NitricAcid.getFluid(4_000))
+            .duration(5 * SECONDS)
+            .eut(TierEU.RECIPE_UMV)
             .addTo(chemicalBathRecipes);
 
         this.protoHalkoniteRecipes();

@@ -8,8 +8,13 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fluids.IFluidHandler;
 
+import com.gtnewhorizon.gtnhlib.hash.Fnv1a32;
 import com.gtnewhorizon.gtnhlib.util.CoordinatePacker;
 
+/**
+ * A tank position a channel was bound to before channels moved into the cover itself. Only used to hand those old
+ * bindings over to their cover, see {@link EnderWorldSavedData#takeLegacyLink}.
+ */
 public class EnderLinkTank implements Serializable {
 
     private static final long serialVersionUID = 1030297456736434221L;
@@ -53,10 +58,11 @@ public class EnderLinkTank implements Serializable {
 
     @Override
     public int hashCode() {
-        int hash = 31 + X;
-        hash = hash * 31 + Y;
-        hash = hash * 31 + Z;
-        return hash * 31 + D;
+        int hash = Fnv1a32.initialState();
+        hash = Fnv1a32.hashStep(hash, X);
+        hash = Fnv1a32.hashStep(hash, Y);
+        hash = Fnv1a32.hashStep(hash, Z);
+        return Fnv1a32.hashStep(hash, D);
     }
 
     public NBTTagCompound save() {

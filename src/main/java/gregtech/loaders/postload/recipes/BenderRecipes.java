@@ -6,13 +6,15 @@ import static gregtech.api.util.GTRecipeBuilder.TICKS;
 
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
 
-import goodgenerator.items.GGMaterial;
 import gregtech.api.enums.GTValues;
 import gregtech.api.enums.ItemList;
 import gregtech.api.enums.Materials;
 import gregtech.api.enums.OrePrefixes;
 import gregtech.api.enums.TierEU;
+import gregtech.api.objects.OreDictItemStack;
+import gregtech.api.util.GTModHandler;
 import gregtech.api.util.GTOreDictUnificator;
 
 public class BenderRecipes implements Runnable {
@@ -36,7 +38,7 @@ public class BenderRecipes implements Runnable {
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
-            .itemInputs(GTOreDictUnificator.get(OrePrefixes.stick, Materials.WroughtIron, 32L))
+            .itemInputs(GTOreDictUnificator.get(OrePrefixes.stick, Materials.CastIron, 32L))
             .circuit(10)
             .itemOutputs(ItemList.RC_Rail_Standard.get(64L))
             .duration(15 * SECONDS)
@@ -164,7 +166,7 @@ public class BenderRecipes implements Runnable {
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
-            .itemInputs(GTOreDictUnificator.get(OrePrefixes.stick, Materials.WroughtIron, 24L))
+            .itemInputs(GTOreDictUnificator.get(OrePrefixes.stick, Materials.CastIron, 24L))
             .circuit(12)
             .itemOutputs(ItemList.RC_Rebar.get(64L))
             .duration(10 * SECONDS)
@@ -232,7 +234,7 @@ public class BenderRecipes implements Runnable {
             .circuit(1)
             .itemOutputs(GTOreDictUnificator.get(OrePrefixes.plateAlloy, Materials.HV, 1L))
             .duration(5 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
@@ -240,7 +242,7 @@ public class BenderRecipes implements Runnable {
             .circuit(12)
             .itemOutputs(ItemList.Cell_Empty.get(1L))
             .duration(10 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
@@ -248,7 +250,7 @@ public class BenderRecipes implements Runnable {
             .circuit(12)
             .itemOutputs(ItemList.Cell_Empty.get(1L))
             .duration(5 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
@@ -256,7 +258,7 @@ public class BenderRecipes implements Runnable {
             .circuit(12)
             .itemOutputs(ItemList.Cell_Empty.get(4L))
             .duration(5 * SECONDS)
-            .eut(8)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
@@ -268,7 +270,7 @@ public class BenderRecipes implements Runnable {
             .addTo(benderRecipes);
 
         GTValues.RA.stdBuilder()
-            .itemInputs(GTOreDictUnificator.get(OrePrefixes.plate, Materials.WroughtIron, 3L))
+            .itemInputs(GTOreDictUnificator.get(OrePrefixes.plate, Materials.CastIron, 3L))
             .circuit(12)
             .itemOutputs(new ItemStack(Items.bucket, 1, 0))
             .duration(10 * SECONDS)
@@ -280,15 +282,7 @@ public class BenderRecipes implements Runnable {
             .circuit(2)
             .itemOutputs(ItemList.IC2_Fuel_Rod_Empty.get(1))
             .duration(5 * SECONDS)
-            .eut(8)
-            .addTo(benderRecipes);
-
-        GTValues.RA.stdBuilder()
-            .itemInputs(GGMaterial.tairitsu.get(OrePrefixes.ingot, 9))
-            .circuit(9)
-            .itemOutputs(GGMaterial.tairitsu.get(OrePrefixes.plateDense, 1))
-            .duration(5 * SECONDS)
-            .eut(TierEU.RECIPE_ZPM)
+            .eut(TierEU.RECIPE_ULV)
             .addTo(benderRecipes);
 
         if (GTOreDictUnificator.get(OrePrefixes.itemCasing, Materials.Tin, 1L) != null) {
@@ -300,6 +294,20 @@ public class BenderRecipes implements Runnable {
                 .eut((int) TierEU.RECIPE_HV)
                 .addTo(benderRecipes);
         }
+
+        // From ProcessingFood - foodDough (remove furnace smelting)
+        for (net.minecraft.item.ItemStack stack : OreDictionary.getOres("foodDough")) {
+            GTModHandler.removeFurnaceSmelting(stack);
+        }
+
+        // From ProcessingFood - foodDough bender
+        GTValues.RA.stdBuilder()
+            .itemInputs(new OreDictItemStack("foodDough", 1))
+            .circuit(1)
+            .itemOutputs(ItemList.Food_Flat_Dough.get(1L))
+            .duration(16 * TICKS)
+            .eut(4)
+            .addTo(benderRecipes);
 
     }
 }

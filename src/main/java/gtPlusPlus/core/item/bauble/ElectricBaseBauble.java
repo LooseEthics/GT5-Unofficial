@@ -6,19 +6,15 @@ import static gregtech.api.enums.Mods.GTPlusPlus;
 import java.util.List;
 
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
-import net.minecraft.world.World;
 
 import baubles.api.BaubleType;
-import baubles.api.IBauble;
 import cpw.mods.fml.common.Optional;
-import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import gregtech.api.enums.GTValues;
@@ -32,7 +28,7 @@ import ic2.api.item.IElectricItemManager;
 @Optional.InterfaceList(
     value = { @Optional.Interface(iface = "baubles.api.IBauble", modid = Mods.ModIDs.BAUBLES),
         @Optional.Interface(iface = "baubles.api.BaubleType", modid = Mods.ModIDs.BAUBLES) })
-public abstract class ElectricBaseBauble extends BaseBauble implements IElectricItem, IElectricItemManager, IBauble {
+public abstract class ElectricBaseBauble extends BaseBauble implements IElectricItem, IElectricItemManager {
 
     public final int mTier;
     private final double maxValueEU;
@@ -49,9 +45,6 @@ public abstract class ElectricBaseBauble extends BaseBauble implements IElectric
         this.setMaxStackSize(1);
         this.setNoRepair();
         this.setCreativeTab(AddToCreativeTab.tabMachines);
-        if (GameRegistry.findItem(GTPlusPlus.ID, aUnlocalName) == null) {
-            GameRegistry.registerItem(this, aUnlocalName);
-        }
     }
 
     public abstract String getTextureNameForBauble();
@@ -71,12 +64,6 @@ public abstract class ElectricBaseBauble extends BaseBauble implements IElectric
             ElectricItem.manager.charge(charged, Double.POSITIVE_INFINITY, Integer.MAX_VALUE, true, false);
             itemList.add(charged);
         }
-    }
-
-    @Override
-    public void onUpdate(final ItemStack itemStack, final World worldObj, final Entity player, final int p_77663_4_,
-        final boolean p_77663_5_) {
-        super.onUpdate(itemStack, worldObj, player, p_77663_4_, p_77663_5_);
     }
 
     @Override

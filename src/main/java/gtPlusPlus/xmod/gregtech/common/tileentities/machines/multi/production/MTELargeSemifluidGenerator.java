@@ -8,13 +8,17 @@ import static gregtech.api.enums.HatchElement.InputHatch;
 import static gregtech.api.enums.HatchElement.Maintenance;
 import static gregtech.api.enums.HatchElement.Muffler;
 import static gregtech.api.util.GTStructureUtility.buildHatchAdder;
-import static gtPlusPlus.xmod.gregtech.api.metatileentity.implementations.base.GTPPMultiBlockBase.GTPPHatchElement.TTDynamo;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.fluids.FluidStack;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,24 +29,24 @@ import com.gtnewhorizon.structurelib.structure.ISurvivalBuildEnvironment;
 import com.gtnewhorizon.structurelib.structure.StructureDefinition;
 
 import gregtech.api.GregTechAPI;
+import gregtech.api.casing.Casings;
 import gregtech.api.enums.Materials;
 import gregtech.api.enums.Textures;
 import gregtech.api.interfaces.IIconContainer;
 import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
-import gregtech.api.metatileentity.implementations.MTEHatchDynamo;
-import gregtech.api.metatileentity.implementations.MTEHatchInput;
-import gregtech.api.metatileentity.implementations.MTEHatchMaintenance;
-import gregtech.api.metatileentity.implementations.MTEHatchMuffler;
+import gregtech.api.recipe.RecipeMap;
+import gregtech.api.recipe.RecipeMaps;
 import gregtech.api.recipe.check.CheckRecipeResult;
 import gregtech.api.recipe.check.CheckRecipeResultRegistry;
 import gregtech.api.recipe.check.SimpleCheckRecipeResult;
+import gregtech.api.structure.error.StructureError;
 import gregtech.api.util.GTRecipe;
 import gregtech.api.util.MultiblockTooltipBuilder;
 import gregtech.common.pollution.PollutionConfig;
-import gtPlusPlus.api.recipe.GTPPRecipeMaps;
 import gtPlusPlus.xmod.gregtech.api.metatileentity.implementations.base.GTPPMultiBlockBase;
 
+@IMetaTileEntity.SkipGenerateDescription
 public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemifluidGenerator>
     implements ISurvivalConstructable {
 
@@ -66,43 +70,41 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
     protected MultiblockTooltipBuilder createTooltip() {
         MultiblockTooltipBuilder tt = new MultiblockTooltipBuilder();
         tt.addMachineType(getMachineType())
-            .addInfo("Supply Semifluid Fuels and 2000L of Lubricant per hour to run")
-            .addInfo("Supply 80L of Oxygen per second to boost output (optional)")
-            .addInfo("Default: Produces 2048EU/t at 100% efficiency")
-            .addInfo("Boosted: Produces 6144EU/t at 150% efficiency")
-            .addInfo("Engine Intake Casings must not be obstructed in front (only air blocks)")
+            .addMarkdown(new ResourceLocation("gregtech", "large-semifluid-generator"))
             .addPollutionAmount(getPollutionPerSecond(null))
             .beginStructureBlock(3, 3, 4, false)
-            .addController("Front Center")
-            .addCasingInfoMin("Stable Titanium Machine Casing", 16, false)
-            .addCasingInfoMin("Steel Gear Box Machine Casing", 2, false)
-            .addCasingInfoMin("Engine Intake Machine Casing", 8, false)
-            .addInputHatch("Any Casing", 1)
-            .addMaintenanceHatch("Any Casing", 1)
-            .addMufflerHatch("Any Casing", 1)
-            .addDynamoHatch("Back Center", 2)
+            .addController(StatCollector.translateToLocal("gt.mbtt.structure.front_center_2nd_layer"))
+            .addCasing("16-21", Casings.StableTitaniumMachineCasing.getLocalizedName(), false)
+            .addCasing("8", Casings.EngineIntakeCasing.getLocalizedName(), false)
+            .addCasing("2", Casings.SteelGearBoxCasing.getLocalizedName(), false)
+            .addDynamoHatch("1", StatCollector.translateToLocal("gt.mbtt.structure.back_center_casing"), 2)
+            .addMaintenanceHatch("1", StatCollector.translateToLocal("gt.mbtt.structure.any_machine_casing"), 1)
+            .addMufflerHatch("1", StatCollector.translateToLocal("gt.mbtt.structure.any_machine_casing"), 1)
+            .addInputHatch("1+", StatCollector.translateToLocal("gt.mbtt.structure.any_machine_casing"), 1)
+            .addStructureInfo("")
+            .addStructureFooter(StatCollector.translateToLocal("GT5U.MBTT.Structure.DynamoLimit"))
             .toolTipFinisher();
         return tt;
     }
 
     @Override
     protected IIconContainer getActiveOverlay() {
-        return Textures.BlockIcons.OVERLAY_FRONT_DIESEL_ENGINE_ACTIVE;
+        return Textures.BlockIcons.OVERLAY_FRONT_COMBUSTION_ENGINE_ACTIVE;
     }
 
     @Override
     protected IIconContainer getActiveGlowOverlay() {
-        return Textures.BlockIcons.OVERLAY_FRONT_DIESEL_ENGINE_ACTIVE_GLOW;
+        return Textures.BlockIcons.OVERLAY_FRONT_COMBUSTION_ENGINE_ACTIVE_GLOW;
     }
 
     @Override
     protected IIconContainer getInactiveOverlay() {
-        return Textures.BlockIcons.OVERLAY_FRONT_DIESEL_ENGINE;
+        return Textures.BlockIcons.OVERLAY_FRONT_COMBUSTION_ENGINE;
     }
 
     @Override
     protected IIconContainer getInactiveGlowOverlay() {
-        return Textures.BlockIcons.OVERLAY_FRONT_DIESEL_ENGINE_GLOW;
+        return Textures.BlockIcons.OVERLAY_FRONT_COMBUSTION_ENGINE_GLOW;
     }
 
     @Override
@@ -118,6 +120,11 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
     @Override
     public boolean isCorrectMachinePart(ItemStack aStack) {
         return getMaxEfficiency(aStack) > 0;
+    }
+
+    @Override
+    public Collection<RecipeMap<?>> getAvailableRecipeMaps() {
+        return Collections.singletonList(RecipeMaps.semiFluidFuels);
     }
 
     @Override
@@ -143,7 +150,7 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
         }
 
         for (FluidStack hatchFluid : tFluids) { // Loops through hatches
-            GTRecipe aFuel = GTPPRecipeMaps.semiFluidFuels.getBackend()
+            GTRecipe aFuel = RecipeMaps.semiFluidFuels.getBackend()
                 .findFuel(hatchFluid);
             if (aFuel == null) {
                 // Not a valid semifluid fuel.
@@ -200,10 +207,7 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
                         .buildAndChain(onElementPass(x -> ++x.mCasing, ofBlock(getCasingBlock(), getCasingMeta()))))
                 .addElement('G', ofBlock(getGearboxBlock(), getGearboxMeta()))
                 .addElement('I', ofBlock(getIntakeBlock(), getIntakeMeta()))
-                .addElement(
-                    'M',
-                    Dynamo.or(TTDynamo)
-                        .newAny(getCasingTextureIndex(), 2))
+                .addElement('M', Dynamo.newAny(getCasingTextureIndex(), 2))
                 .build();
         }
         return STRUCTURE_DEFINITION;
@@ -221,38 +225,14 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
     }
 
     @Override
-    public boolean checkMachine(IGregTechTileEntity aBaseMetaTileEntity, ItemStack aStack) {
+    public void checkMachine(IGregTechTileEntity aBaseMetaTileEntity, ItemStack aStack, List<StructureError> errors) {
         mCasing = 0;
         mDynamoHatches.clear();
-        return checkPiece(mName, 1, 1, 0) && mCasing >= 16 && checkHatch();
-    }
-
-    public final boolean addLargeSemifluidGeneratorList(IGregTechTileEntity aTileEntity, int aBaseCasingIndex) {
-        if (aTileEntity == null) {
-            return false;
-        } else {
-            IMetaTileEntity aMetaTileEntity = aTileEntity.getMetaTileEntity();
-            if (aMetaTileEntity instanceof MTEHatchMaintenance) {
-                return addToMachineList(aTileEntity, aBaseCasingIndex);
-            } else if (aMetaTileEntity instanceof MTEHatchMuffler) {
-                return addToMachineList(aTileEntity, aBaseCasingIndex);
-            } else if (aMetaTileEntity instanceof MTEHatchInput) {
-                return addToMachineList(aTileEntity, aBaseCasingIndex);
-            }
-        }
-        return false;
-    }
-
-    public final boolean addLargeSemifluidGeneratorBackList(IGregTechTileEntity aTileEntity, int aBaseCasingIndex) {
-        if (aTileEntity == null) {
-            return false;
-        } else {
-            IMetaTileEntity aMetaTileEntity = aTileEntity.getMetaTileEntity();
-            if (aMetaTileEntity instanceof MTEHatchDynamo || this.isThisHatchMultiDynamo(aTileEntity)) {
-                return addToMachineList(aTileEntity, aBaseCasingIndex);
-            }
-        }
-        return false;
+        if (!checkPiece(mName, 1, 1, 0, errors)) return;
+        checkCasingMin(errors, mCasing, 16);
+        checkHasMaintenanceHatch(errors);
+        checkHasMufflerHatch(errors);
+        checkHasInputHatch(errors);
     }
 
     public Block getCasingBlock() {
@@ -329,16 +309,8 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
     }
 
     @Override
-    public String[] getExtraInfoData() {
-        return new String[] { "Large Semifluid Generator", "Current Output: " + lEUt * mEfficiency / 10000 + " EU/t",
-            "Fuel Consumption: " + fuelConsumption + "L/t", "Fuel Value: " + fuelValue + " EU/L",
-            "Fuel Remaining: " + fuelRemaining + " Litres", "Current Efficiency: " + (mEfficiency / 100) + "%",
-            getIdealStatus() == getRepairStatus() ? "No Maintainance issues" : "Needs Maintainance" };
-    }
-
-    @Override
     public String getMachineType() {
-        return "Semifluid Generator, LSB";
+        return StatCollector.translateToLocal("gt.mbtt.machine_type.semifluid_generator");
     }
 
     @Override
@@ -351,4 +323,8 @@ public class MTELargeSemifluidGenerator extends GTPPMultiBlockBase<MTELargeSemif
         return false;
     }
 
+    @Override
+    public boolean supportsSingleRecipeLocking() {
+        return false;
+    }
 }

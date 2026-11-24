@@ -7,14 +7,11 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
 
-import gregtech.api.enums.TextureSet;
+import gregtech.api.enums.MaterialIconRegistry;
 import gregtech.api.interfaces.IIconContainer;
 import gregtech.api.items.MetaGeneratedTool;
 
 public abstract class ToolTurbine extends GTTool {
-
-    @Override
-    public abstract float getBaseDamage();
 
     @Override
     public boolean isMinableBlock(Block aBlock, int aMetaData) {
@@ -23,7 +20,9 @@ public abstract class ToolTurbine extends GTTool {
 
     @Override
     public IIconContainer getIcon(boolean aIsToolHead, ItemStack aStack) {
-        return aIsToolHead ? MetaGeneratedTool.getPrimaryMaterial(aStack).mIconSet.mTextures[TextureSet.INDEX_turbine]
+        return aIsToolHead
+            ? MetaGeneratedTool.getPrimaryMaterial(aStack).mIconSet.mTextures[MaterialIconRegistry.IconType.TOOL_TURBINE
+                .ordinal()]
             : null;
     }
 

@@ -10,6 +10,7 @@ import net.minecraft.util.StatCollector;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.api.widget.IWidget;
 import com.cleanroommc.modularui.screen.ModularPanel;
+import com.cleanroommc.modularui.utils.serialization.ByteBufAdapters;
 import com.cleanroommc.modularui.value.sync.GenericSyncValue;
 import com.cleanroommc.modularui.value.sync.IntSyncValue;
 import com.cleanroommc.modularui.value.sync.LongSyncValue;
@@ -28,8 +29,15 @@ public class MTEResearchStationGui extends MTEMultiBlockBaseGui<MTEResearchStati
     @Override
     protected ListWidget<IWidget, ?> createTerminalTextWidget(PanelSyncManager syncManager, ModularPanel parent) {
 
-        GenericSyncValue<ItemStack> outputSyncer = GenericSyncValue
-            .forItem(() -> multiblock.researchOutputForGUI, val -> multiblock.researchOutputForGUI = val);
+        GenericSyncValue<ItemStack, ?> outputSyncer = new GenericSyncValue<>(
+            ItemStack.class,
+            () -> multiblock.researchOutputForGUI,
+            val -> multiblock.researchOutputForGUI = val,
+            ByteBufAdapters.ITEM_STACK,
+            ByteBufAdapters.ITEM_STACK,
+            ByteBufAdapters.ITEM_STACK,
+            null,
+            true);
 
         LongSyncValue computationReqSyncer = new LongSyncValue(
             () -> multiblock.computationRequired,
@@ -37,14 +45,14 @@ public class MTEResearchStationGui extends MTEMultiBlockBaseGui<MTEResearchStati
         LongSyncValue computationRemSyncer = new LongSyncValue(
             () -> multiblock.computationRemaining,
             val -> multiblock.computationRemaining = val);
-        IntSyncValue ticksUntilPacketLossFailSyncger = new IntSyncValue(
+        IntSyncValue ticksUntilPacketLossFailSyncer = new IntSyncValue(
             () -> multiblock.ticksUntilPacketLossFail,
             val -> multiblock.ticksUntilPacketLossFail = val);
 
         syncManager.syncValue("outputName", outputSyncer);
         syncManager.syncValue("computationRequired", computationReqSyncer);
         syncManager.syncValue("computationRemaining", computationRemSyncer);
-        syncManager.syncValue("ticksUntilPacketLossFail", ticksUntilPacketLossFailSyncger);
+        syncManager.syncValue("ticksUntilPacketLossFail", ticksUntilPacketLossFailSyncer);
 
         ListWidget<IWidget, ?> terminal = super.createTerminalTextWidget(syncManager, parent);
         terminal.child(IKey.dynamic(() -> {

@@ -2,6 +2,7 @@ package gregtech.common.tileentities.machines;
 
 import static gregtech.api.enums.GTValues.TIER_COLORS;
 import static gregtech.api.enums.GTValues.VN;
+import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_ME_CRAFTING_INPUT_COLORS;
 import static gregtech.api.enums.Textures.BlockIcons.OVERLAY_ME_CRAFTING_INPUT_SLAVE;
 
 import java.util.ArrayList;
@@ -9,9 +10,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.WeakHashMap;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -19,24 +20,34 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
+
 import gregtech.api.enums.GTValues;
 import gregtech.api.enums.ItemList;
 import gregtech.api.interfaces.IDataCopyable;
 import gregtech.api.interfaces.ITexture;
+import gregtech.api.interfaces.metatileentity.IMetaTileEntity;
+import gregtech.api.interfaces.tileentity.IGregTechDeviceInformation;
 import gregtech.api.interfaces.tileentity.IGregTechTileEntity;
-import gregtech.api.logic.ProcessingLogic;
 import gregtech.api.metatileentity.MetaTileEntity;
 import gregtech.api.metatileentity.implementations.MTEHatchInputBus;
+import gregtech.api.modularui2.ProxiedMteGui;
+import gregtech.api.objects.XSTR;
 import gregtech.api.render.TextureFactory;
+import gregtech.api.util.GTSplit;
+import gregtech.api.util.GTUtility;
 import mcp.mobius.waila.api.IWailaConfigHandler;
 import mcp.mobius.waila.api.IWailaDataAccessor;
 
-public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDualInputHatchWithPattern, IDataCopyable {
+@IMetaTileEntity.SkipGenerateDescription
+public final class MTEHatchCraftingInputSlave extends MTEHatchInputBus
+    implements IDualInputHatchWithPattern, IDataCopyable {
 
     @Override
     protected boolean useMui2() {
@@ -47,17 +58,27 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
     private MTEHatchCraftingInputME master; // use getMaster() to access
     private int masterX, masterY, masterZ;
     private boolean masterSet = false; // indicate if values of masterX, masterY, masterZ are valid
+    private RecipeOrder recipeOrder = RecipeOrder.NORMAL;
+    private int[] randomRecipeOrder;
+
+    public enum RecipeOrder {
+
+        NORMAL,
+        REVERSED,
+        RANDOM;
+
+        public String getLangKey() {
+            return "GT5U.hatch.crafting_input_slave.recipe_order." + name().toLowerCase(Locale.ROOT);
+        }
+
+        public static RecipeOrder fromOrdinal(byte ordinal) {
+            final RecipeOrder[] orders = values();
+            return ordinal >= 0 && ordinal < orders.length ? orders[ordinal] : NORMAL;
+        }
+    }
 
     public MTEHatchCraftingInputSlave(int aID, String aName, String aNameRegional) {
-        super(
-            aID,
-            aName,
-            aNameRegional,
-            11,
-            0,
-            new String[] { "Proxy for Crafting Input Buffer/Bus", "Hatch Tier: " + TIER_COLORS[11] + VN[11],
-                "Link with Crafting Input Buffer/Bus using Data Stick to share inventory",
-                "Left click on the Crafting Input Buffer/Bus, then right click on this block to link them", });
+        super(aID, aName, aNameRegional, 11, 0, null);
         disableSort = true;
     }
 
@@ -78,14 +99,20 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
 
     @Override
     public ITexture[] getTexturesInactive(ITexture aBaseTexture) {
-        return new ITexture[] { aBaseTexture, TextureFactory.of(OVERLAY_ME_CRAFTING_INPUT_SLAVE) };
+        byte color = getBaseMetaTileEntity().getColorization();
+        ITexture coloredPipeOverlay = TextureFactory.of(OVERLAY_ME_CRAFTING_INPUT_COLORS[color + 1]);
+        return new ITexture[] { aBaseTexture, TextureFactory.of(OVERLAY_ME_CRAFTING_INPUT_SLAVE), coloredPipeOverlay };
     }
 
     @Override
     public void onPostTick(IGregTechTileEntity aBaseMetaTileEntity, long aTimer) {
         super.onPostTick(aBaseMetaTileEntity, aTimer);
-        if (aTimer % 100 == 0 && masterSet && getMaster() == null) {
-            trySetMasterFromCoord(masterX, masterY, masterZ);
+        if (aBaseMetaTileEntity.isServerSide() && aTimer % 100 == 0) {
+            if (getMaster() != null || !masterSet) {
+                aBaseMetaTileEntity.tryDisableTicking();
+            } else if (trySetMasterFromCoord(masterX, masterY, masterZ) != null) {
+                aBaseMetaTileEntity.tryDisableTicking();
+            }
         }
     }
 
@@ -100,6 +127,11 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
             masterZ = masterNBT.getInteger("z");
             masterSet = true;
         }
+        if (aNBT.hasKey("recipeOrder")) {
+            recipeOrder = RecipeOrder.fromOrdinal(aNBT.getByte("recipeOrder"));
+        } else {
+            recipeOrder = aNBT.getBoolean("reverseRecipes") ? RecipeOrder.REVERSED : RecipeOrder.NORMAL;
+        }
     }
 
     @Override
@@ -112,6 +144,7 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
             masterNBT.setInteger("z", masterZ);
             aNBT.setTag("master", masterNBT);
         }
+        aNBT.setByte("recipeOrder", (byte) recipeOrder.ordinal());
     }
 
     @Override
@@ -124,13 +157,17 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
         var ret = new ArrayList<String>();
         if (getMaster() != null) {
             ret.add(
-                StatCollector.translateToLocalFormatted(
-                    "GT5U.infodata.hatch.crafting_input_slave.linked_to",
-                    masterX,
-                    masterY,
-                    masterZ));
+                IGregTechDeviceInformation
+                    .encode("GT5U.infodata.hatch.crafting_input_slave.linked_to", masterX, masterY, masterZ));
             ret.addAll(Arrays.asList(getMaster().getInfoData()));
-        } else ret.add(StatCollector.translateToLocal("GT5U.infodata.hatch.crafting_input_slave.not_linked_to"));
+        } else ret.add("GT5U.infodata.hatch.crafting_input_slave.not_linked_to");
+        ret.add(
+            IGregTechDeviceInformation.encode(
+                "GT5U.infodata.hatch.crafting_input_slave.recipeOrder",
+                IGregTechDeviceInformation.translatable(recipeOrder.getLangKey())));
+        ret.add(
+            IGregTechDeviceInformation
+                .encode("GT5U.infodata.hatch.crafting_input_slave.patternOrder", getRecipeOrderInfo()));
         return ret.toArray(new String[0]);
     }
 
@@ -138,8 +175,18 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
         if (master == null) return null;
         if (master.getBaseMetaTileEntity() == null) { // master disappeared
             master = null;
+            getBaseMetaTileEntity().enableTicking();
         }
         return master;
+    }
+
+    public RecipeOrder getRecipeOrder() {
+        return recipeOrder;
+    }
+
+    public void setRecipeOrder(RecipeOrder recipeOrder) {
+        this.recipeOrder = recipeOrder;
+        markDirty();
     }
 
     @Override
@@ -161,7 +208,14 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
 
     @Override
     public Iterator<MTEHatchCraftingInputME.PatternSlot<MTEHatchCraftingInputME>> inventories() {
-        return getMaster() != null ? getMaster().inventories() : Collections.emptyIterator();
+        final MTEHatchCraftingInputME currentMaster = getMaster();
+        if (currentMaster == null) return Collections.emptyIterator();
+
+        return switch (recipeOrder) {
+            case REVERSED -> currentMaster.inventoriesReversed();
+            case RANDOM -> currentMaster.inventoriesInOrder(getRandomRecipeOrder());
+            case NORMAL -> currentMaster.inventories();
+        };
     }
 
     @Override
@@ -180,8 +234,19 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
     }
 
     @Override
-    public boolean justUpdated() {
-        return getMaster() != null && getMaster().justUpdated();
+    public void addWatcher(IHatchWatcher watcher) {
+        watchers.add(watcher);
+    }
+
+    @Override
+    public void removeWatcher(IHatchWatcher watcher) {
+        watchers.remove(watcher);
+    }
+
+    public void onParentInvChange() {
+        for (IHatchWatcher watcher : watchers) {
+            watcher.scheduleRecipeCheckImmediate();
+        }
     }
 
     public MTEHatchCraftingInputME trySetMasterFromCoord(int x, int y, int z) {
@@ -194,9 +259,6 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
             if (master != null) master.removeProxyHatch(this);
             master = newMaster;
             master.addProxyHatch(this);
-            for (var pl : pendingProcessingLogics) {
-                master.setProcessingLogic(pl);
-            }
         }
         masterX = x;
         masterY = y;
@@ -211,7 +273,7 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
         if (!ItemList.Tool_DataStick.isStackEqual(dataStick, false, true)) {
             return false;
         }
-        if (!dataStick.hasTagCompound() || !dataStick.stackTagCompound.getString("type")
+        if (!ItemStackNBT.getString(dataStick, "type")
             .equals("CraftingInputBuffer")) {
             return false;
         }
@@ -230,15 +292,18 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
 
     @Override
     public boolean onRightclick(IGregTechTileEntity aBaseMetaTileEntity, EntityPlayer aPlayer) {
-        if (!(aPlayer instanceof EntityPlayerMP)) {
-            return false;
+        if (!(aPlayer instanceof EntityPlayerMP player)) {
+            return true;
         }
         if (tryLinkDataStick(aPlayer)) {
             return true;
         }
         var master = getMaster();
         if (master != null) {
-            return master.onRightclick(master.getBaseMetaTileEntity(), aPlayer);
+            if (aBaseMetaTileEntity.isServerSide()) {
+                ProxiedMteGui.open(master, player, this);
+            }
+            return true;
         }
         return false;
     }
@@ -276,6 +341,11 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
             NBTTagCompound masterNBT = nbt.getCompoundTag("master");
             trySetMasterFromCoord(masterNBT.getInteger("x"), masterNBT.getInteger("y"), masterNBT.getInteger("z"));
         }
+        if (nbt.hasKey("recipeOrder")) {
+            recipeOrder = RecipeOrder.fromOrdinal(nbt.getByte("recipeOrder"));
+        } else {
+            recipeOrder = nbt.getBoolean("reverseRecipes") ? RecipeOrder.REVERSED : RecipeOrder.NORMAL;
+        }
         return true;
     }
 
@@ -290,6 +360,7 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
             masterNBT.setInteger("z", masterZ);
             tag.setTag("master", masterNBT);
         }
+        tag.setByte("recipeOrder", (byte) recipeOrder.ordinal());
         return tag;
     }
 
@@ -311,6 +382,13 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
                     tag.getInteger("masterZ")));
         }
 
+        currenttip.add(
+            StatCollector.translateToLocalFormatted(
+                "GT5U.waila.hatch.crafting_input_slave.recipeOrder",
+                StatCollector.translateToLocal(
+                    RecipeOrder.fromOrdinal(tag.getByte("recipeOrder"))
+                        .getLangKey())));
+
         if (tag.hasKey("masterName")) {
             currenttip.add(EnumChatFormatting.GOLD + tag.getString("masterName") + EnumChatFormatting.RESET);
         }
@@ -323,6 +401,7 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
         int z) {
 
         tag.setBoolean("linked", getMaster() != null);
+        tag.setByte("recipeOrder", (byte) recipeOrder.ordinal());
         if (masterSet) {
             tag.setInteger("masterX", masterX);
             tag.setInteger("masterY", masterY);
@@ -338,25 +417,66 @@ public class MTEHatchCraftingInputSlave extends MTEHatchInputBus implements IDua
         return getMaster() != null ? getMaster().getItemsForHoloGlasses() : null;
     }
 
-    private Set<ProcessingLogic> pendingProcessingLogics = Collections.newSetFromMap(new WeakHashMap<>());
+    private void cycleRecipeOrder() {
+        final RecipeOrder[] orders = RecipeOrder.values();
+        setRecipeOrder(orders[(recipeOrder.ordinal() + 1) % orders.length]);
+    }
 
-    @Override
-    public void setProcessingLogic(ProcessingLogic pl) {
-        // store all ProcessingLogics, then set them to the master CRIB when the player bind/rebind one later
-        pendingProcessingLogics.add(pl);
-        if (getMaster() != null) {
-            getMaster().setProcessingLogic(pl);
+    private int getSlotAtPriority(int priority) {
+        return switch (recipeOrder) {
+            case REVERSED -> MTEHatchCraftingInputME.MAX_PATTERN_COUNT - 1 - priority;
+            case RANDOM -> getRandomRecipeOrder()[priority];
+            case NORMAL -> priority;
+        };
+    }
+
+    private String getRecipeOrderInfo() {
+        final StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < MTEHatchCraftingInputME.MAX_PATTERN_COUNT; i++) {
+            if (i > 0) builder.append(", ");
+            builder.append(getSlotAtPriority(i) + 1);
         }
+        return builder.toString();
+    }
+
+    private int[] getRandomRecipeOrder() {
+        if (randomRecipeOrder == null) {
+            final int[] order = new int[MTEHatchCraftingInputME.MAX_PATTERN_COUNT];
+            for (int i = 0; i < order.length; i++) order[i] = i;
+
+            final XSTR random = new XSTR(getRecipeOrderSeed());
+            for (int i = order.length - 1; i > 0; i--) {
+                final int j = random.nextInt(i + 1);
+                final int swap = order[i];
+                order[i] = order[j];
+                order[j] = swap;
+            }
+            randomRecipeOrder = order;
+        }
+        return randomRecipeOrder;
+    }
+
+    private long getRecipeOrderSeed() {
+        final IGregTechTileEntity base = getBaseMetaTileEntity();
+        return base == null ? 0 : Objects.hash(base.getXCoord(), base.getYCoord(), base.getZCoord());
     }
 
     @Override
-    public void resetCraftingInputRecipeMap(ProcessingLogic pl) {
-        if (getMaster() != null) getMaster().resetCraftingInputRecipeMap(pl);
-
+    public void onScrewdriverRightClick(ForgeDirection side, EntityPlayer aPlayer, float aX, float aY, float aZ,
+        ItemStack aTool) {
+        if (getBaseMetaTileEntity().isServerSide()) {
+            cycleRecipeOrder();
+            GTUtility.sendChatTrans(
+                aPlayer,
+                "GT5U.hatch.crafting_input_slave.recipe_order.current",
+                new ChatComponentTranslation(recipeOrder.getLangKey()));
+        }
+        // not calling super.onScrewdriverRightClick, because input filter is irrelevant for a proxy hatch
     }
 
     @Override
-    public void resetCraftingInputRecipeMap() {
-        if (getMaster() != null) getMaster().resetCraftingInputRecipeMap();
+    public String[] getDescription() {
+        return GTSplit
+            .splitLocalizedFormatted("gt.blockmachines.input_bus_crafting_slave.desc", TIER_COLORS[11] + VN[11]);
     }
 }

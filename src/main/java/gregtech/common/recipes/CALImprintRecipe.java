@@ -10,6 +10,8 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import com.gtnewhorizon.gtnhlib.item.ItemStackNBT;
+
 import bartworks.API.enums.CircuitImprint;
 import bartworks.common.tileentities.multis.MTECircuitAssemblyLine;
 import gregtech.api.util.GTUtility;
@@ -103,15 +105,7 @@ public class CALImprintRecipe implements IRecipe {
 
     public static ItemStack installImprint(@NotNull ItemStack cal, @NotNull CircuitImprint circuitImprint) {
         ItemStack imprintedCAL = GTUtility.copyAmount(1, cal);
-        NBTTagCompound tag = imprintedCAL.getTagCompound();
-
-        if (tag == null) {
-            tag = new NBTTagCompound();
-            imprintedCAL.setTagCompound(tag);
-        }
-
-        tag.setInteger(MTECircuitAssemblyLine.IMPRINT_ID_KEY, circuitImprint.id);
-
+        ItemStackNBT.setInteger(imprintedCAL, MTECircuitAssemblyLine.IMPRINT_ID_KEY, circuitImprint.id);
         return imprintedCAL;
     }
 
@@ -126,14 +120,7 @@ public class CALImprintRecipe implements IRecipe {
 
         if (tag == null) return null;
 
-        // old tag
-        if (tag.hasKey(MTECircuitAssemblyLine.IMPRINT_KEY)) {
-            String name = ItemStack.loadItemStackFromNBT(tag.getCompoundTag(MTECircuitAssemblyLine.IMPRINT_KEY))
-                .getUnlocalizedName();
-            if (CircuitImprint.IMPRINT_LOOKUPS_BY_UNLOCALISED_NAMES.containsKey(name)) {
-                return CircuitImprint.IMPRINT_LOOKUPS_BY_UNLOCALISED_NAMES.get(name);
-            }
-        } else if (tag.hasKey(MTECircuitAssemblyLine.IMPRINT_ID_KEY)) {
+        if (tag.hasKey(MTECircuitAssemblyLine.IMPRINT_ID_KEY)) {
             int id = tag.getInteger(MTECircuitAssemblyLine.IMPRINT_ID_KEY);
             if (CircuitImprint.IMPRINT_LOOKUPS_BY_IDS.containsKey(id)) {
                 return CircuitImprint.IMPRINT_LOOKUPS_BY_IDS.get(id);

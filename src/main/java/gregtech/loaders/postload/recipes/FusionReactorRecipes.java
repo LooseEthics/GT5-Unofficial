@@ -8,6 +8,8 @@ import static gregtech.api.util.GTRecipeBuilder.SECONDS;
 import static gregtech.api.util.GTRecipeBuilder.TICKS;
 import static gregtech.api.util.GTRecipeConstants.FUSION_THRESHOLD;
 
+import net.minecraftforge.fluids.FluidStack;
+
 import gregtech.api.enums.GTValues;
 import gregtech.api.enums.Materials;
 import gregtech.api.enums.TierEU;
@@ -290,6 +292,18 @@ public class FusionReactorRecipes implements Runnable {
             .metadata(FUSION_THRESHOLD, 500_000_000L)
             .addTo(fusionRecipes); // FT3
 
+        // 16 regular mk 4 reactors should produce ~ 250k L/s
+        // one mk4 = 16k L/s
+        GTValues.RA.stdBuilder()
+            .fluidInputs(
+                new FluidStack(MaterialsElements.STANDALONE.CELESTIAL_TUNGSTEN.getPlasma(), 4000),
+                Materials.OrikalkicReagent.getFluid(100))
+            .fluidOutputs(Materials.Orikalkum.getPlasma(4000))
+            .duration(5 * TICKS)
+            .eut(1_966_080)
+            .metadata(FUSION_THRESHOLD, 1_000_000_000L)
+            .addTo(fusionRecipes); // FT4
+
         GTValues.RA.stdBuilder()
             .fluidInputs(
                 Materials.Cobalt.getMolten(1 * INGOTS),
@@ -306,10 +320,7 @@ public class FusionReactorRecipes implements Runnable {
             .duration(4 * TICKS)
             .eut(TierEU.RECIPE_UEV / 2)
             .metadata(FUSION_THRESHOLD, 6_000_000_000L)
-            .addTo(fusionRecipes); // FT5
-                                   // because
-                                   // of UEV
-                                   // voltage
+            .addTo(fusionRecipes); // FT5 because of UEV voltage
 
         GTValues.RA.stdBuilder()
             .fluidInputs(Materials.Tellurium.getMolten(4 * INGOTS), Materials.Zinc.getMolten(4 * INGOTS))
@@ -323,6 +334,14 @@ public class FusionReactorRecipes implements Runnable {
             .fluidInputs(Materials.Osmium.getMolten(4 * INGOTS), Materials.Silicon.getMolten(4 * INGOTS))
             .fluidOutputs(Materials.Thorium.getPlasma(4 * INGOTS))
             .duration(4 * TICKS)
+            .eut(TierEU.RECIPE_UEV / 2)
+            .metadata(FUSION_THRESHOLD, 6_000_000_000L)
+            .addTo(fusionRecipes); // FT5 because of UEV voltage
+
+        GTValues.RA.stdBuilder()
+            .fluidInputs(Materials.Redstone.getPlasma(4 * INGOTS), Materials.Ichorium.getMolten(4 * INGOTS))
+            .fluidOutputs(Materials.UnformedHexanite.getFluid(4 * INGOTS))
+            .duration(32 * TICKS)
             .eut(TierEU.RECIPE_UEV / 2)
             .metadata(FUSION_THRESHOLD, 6_000_000_000L)
             .addTo(fusionRecipes); // FT5 because of UEV voltage

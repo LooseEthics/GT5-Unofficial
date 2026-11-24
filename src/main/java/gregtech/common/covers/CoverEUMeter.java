@@ -30,6 +30,7 @@ import io.netty.buffer.ByteBuf;
 public class CoverEUMeter extends Cover implements Invertable {
 
     private EnergyType type;
+    private long maxThreshold;
     private boolean inverted;
     /**
      * The special value {@code 0} means threshold check is disabled.
@@ -52,10 +53,12 @@ public class CoverEUMeter extends Cover implements Invertable {
         return this;
     }
 
+    @Override
     public boolean isInverted() {
         return this.inverted;
     }
 
+    @Override
     public CoverEUMeter setInverted(boolean inverted) {
         this.inverted = inverted;
         return this;
@@ -233,6 +236,18 @@ public class CoverEUMeter extends Cover implements Invertable {
     @Override
     public ModularWindow createWindow(CoverUIBuildContext buildContext) {
         return new EUMeterUIFactory(buildContext).createWindow();
+    }
+
+    public long fetchMaxthreshold() {
+        return getType().getTileEntityEnergyCapacity(getTile());
+    }
+
+    public long getMaxThreshold() {
+        return maxThreshold;
+    }
+
+    public void setMaxThreshold(long value) {
+        this.maxThreshold = value;
     }
 
     // endregion

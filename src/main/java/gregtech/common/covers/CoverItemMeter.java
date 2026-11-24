@@ -108,9 +108,8 @@ public class CoverItemMeter extends Cover {
             used = dc.getProgresstime();
         } else if (mte instanceof MTEHatchOutputBusME meoutputbus) {
             // todo for cache mode
-            if (meoutputbus.canAcceptAnyItem()) {
+            if (meoutputbus.hasPhysicalSpace()) {
                 max = 64;
-                used = 0;
             }
         } else {
             final int[] slots = slot >= 0 ? new int[] { slot } : tileEntity.getAccessibleSlotsFromSide(ordinalSide);
@@ -154,9 +153,8 @@ public class CoverItemMeter extends Cover {
             slot++;
             if (slot > coverable.getSizeInventory()) slot = -1;
 
-            if (slot == -1)
-                GTUtility.sendChatToPlayer(aPlayer, GTUtility.trans("053", "Slot: ") + GTUtility.trans("ALL", "All"));
-            else GTUtility.sendChatToPlayer(aPlayer, GTUtility.trans("053", "Slot: ") + slot);
+            if (slot == -1) GTUtility.sendChatTrans(aPlayer, "GT5U.chat.cover.slot.all");
+            else GTUtility.sendChatTrans(aPlayer, "GT5U.chat.cover.slot", slot);
         }
     }
 
